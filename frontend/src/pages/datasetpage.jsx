@@ -29,7 +29,7 @@ function DatasetPage(){
     const handleCreateField = async() =>{
         try {
             const token = localStorage.getItem("access")
-            const response = await api.post(`datasets/create/${projectID}/`,{field_name: fieldName, field_type:fieldType},{headers:{Authorization: `Bearer ${token}`}})
+            const response = await api.post(`datasets/create/${projectID}/`,{field_name: fieldName, field_type:fieldType, project : projectID},{headers:{Authorization: `Bearer ${token}`}})
             console.log(response.data)
             fetchFields()
             setFieldName("")

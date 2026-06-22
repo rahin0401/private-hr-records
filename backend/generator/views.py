@@ -14,6 +14,7 @@ from faker import Faker
 import random
 import os 
 from django.conf import settings
+import pandas as pd
 
 os.makedirs(os.path.join(settings.MEDIA_ROOT,"synthetic"),exist_ok=True)
 fake = Faker()
@@ -48,14 +49,19 @@ class GenerateSyntheticDatasetView(APIView):
     permission_classes = [IsAuthenticated]
     def post (self, request, pk):
         project= get_object_or_404(Project,id=pk , user = request.user)
+        fields = project.dataset_fields.all()
         dataset = project.uploaded_datasets.last()
+
         if not dataset:
             return Response(
                 {"error": "No dataset uploaded"}, status= 400
             )
         rows = request.data.get("rows", 100)
-        synthetic_df = generate_synthetic_data(dataset.file.path,rows)
-        
+        synthetic_df = generate_synthetic_data(dataset.file.path,fields,rows)
+        original_df = pd.read_csv(dataset.file.path)
+        for col in original_df.columns:
+            if col not in synthetic_df.columns:
+                synthetic_df[col]= None
         file_name = f"synthetic_project_{project.id}.csv"
         file_path = os.path.join(settings.MEDIA_ROOT,"synthetic",file_name)
         synthetic_df.to_csv(file_path,index=False)
