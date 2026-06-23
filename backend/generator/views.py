@@ -78,10 +78,16 @@ class DatasetQualityView(APIView):
             return Response({"error": "Generate synthetic dataset first"},status=400)
         original_df = pd.read_csv(original_dataset.file.path)
         synthetic_df = pd.read_csv(synthetic_file)
+
         quality_report = {}
+        categorial_report ={}
         total_difference = 0
         count = 0 
+
+
         numeric_columns = original_df.select_dtypes(include = ["int64","float64"]).columns
+        categorial_columns = original_df.select_dtypes(include=["object","bool"]).columns
+
         for column in numeric_columns:
             original_mean = original_df[column].mean()
             synthetic_mean = synthetic_df[column].mean()
@@ -100,15 +106,39 @@ class DatasetQualityView(APIView):
                 "original_Min": original_df[column].min(),
                 "synthetic_min": synthetic_df[column].min(),
                 "original_max": original_df[column].max(),
-                "synthetic_max": synthetic_df[column].max()
+                "synthetic_max": synthetic_df[column].max(),
+                "original_std": round(original_df[column].std(),2),
+                "synthetic_std": round(synthetic_df[column].std(),2)
+            }
+
+        for column in categorial_columns:
+            if column in ["name","email"]:
+                pass
+            original_distribution = ( original_df[column].value_counts(normalize=True).mul(100).round(2).to_dict())
+            synthetic_distribution = (synthetic_df[column].value_counts(normalize=True).mul(100).round(2).to_dict())
+            categorial_report[column]= {
+                "original": original_distribution,
+                "synthetic": synthetic_distribution
             }
         if count > 0:
             average_difference = total_difference/count
         else: average_difference = 0 
         quality_score =max(0,round(100- average_difference,2))
+        if quality_score >= 90:
+            quality_rating ="Excellent"
+        elif quality_score >= 75:
+            quality_rating = "Good"
+        elif quality_score >=60:
+            quality_rating ="Fair"
+        else:
+            quality_rating="Poor"
         return Response({"original_rows": len(original_df),
                          "synthetic_rows": len(synthetic_df),
                          "original_columns":len(original_df.columns),
                          "synthetic_columns":len(synthetic_df.columns),
+
                          "quality_score": quality_score,
-                         "quality_metrics": quality_report})
+                         "quality_rating": quality_rating,
+
+                         "quality_metrics": quality_report,
+                         "categorial_metrics": categorial_report})
