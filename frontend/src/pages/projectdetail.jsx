@@ -6,6 +6,7 @@ function ProjectDetails(){
     const {projectID} = useParams();
     const [qualityData,setQualityData] = useState(null)
     const [privacyData,setPrivacyDate] = useState(null)
+    const [downloadLink,setDownloadLink] = useState("")
     const tableStyle = {
     width: "100%",
     borderCollapse: "collapse",
@@ -48,6 +49,18 @@ const tableCell = {
             console.log(error)
         }
     }
+    const fetchDownloadLink =async() =>{
+        try{
+            const token = localStorage.getItem('access')
+            const response = await api.get(`/dashboard/project/${projectID}/download/`,{headers: {Authorization:`Bearer ${token}`}})
+            console.log(response.data)
+            console.log('called')
+            setDownloadLink(response.data.file)
+        }
+        catch(error){
+            console.log(error)
+        }
+    }
     const getRatingColor = (rating) => {
     switch(rating){
         case "Excellent":
@@ -63,8 +76,10 @@ const tableCell = {
     }
 }
     useEffect(()=> {
-        fetchQuality()
-        fetchPrivacy()
+        console.log("use effect")
+        fetchQuality();
+        fetchPrivacy();
+        fetchDownloadLink();
     },[])
     return(
         <>
@@ -274,6 +289,16 @@ const tableCell = {
         </div>
     ))
 }
+{downloadLink && (
+    <div style={{ marginTop: "30px" }}>
+        <a
+            href={`http://127.0.0.1:8000${downloadLink}`}download>
+            <button>
+                Download Synthetic Dataset
+            </button>
+        </a>
+    </div>
+)}
         </>
     )
 }
