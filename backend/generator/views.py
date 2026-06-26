@@ -66,7 +66,15 @@ class GenerateSyntheticDatasetView(APIView):
             )
         rows = request.data.get("rows", 100)
         privacy_level = request.data.get("privacy_level","medium")
-        synthetic_df = generate_synthetic_data(dataset.file.path,fields,rows,privacy_level)
+        epochs = int(request.data.get("epochs",300))
+        batch_size = int(request.data.get("batch_size",500))
+        df = pd.read_csv(dataset.file.path)
+        dataset_size = len(df)
+        if batch_size > dataset_size:
+            return Response({"error": (f"Batch size ({batch_size}) cannot be greater than "f"the dataset size ({dataset_size}).")},status=status.HTTP_400_BAD_REQUEST)
+        if batch_size % 10 != 0:
+            return Response({"error": "Batch size must be divisible by 10 (e.g. 100, 200, 250, 500)."},status=status.HTTP_400_BAD_REQUEST)
+        synthetic_df = generate_synthetic_data(dataset.file.path,fields,rows,privacy_level,epochs,batch_size)
         original_columns = pd.read_csv(dataset.file.path,nrows=0).columns
         for col in original_columns:
             if col not in synthetic_df.columns:

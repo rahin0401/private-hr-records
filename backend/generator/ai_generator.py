@@ -7,7 +7,7 @@ import numpy as np
 
 fake = Faker()
 
-def generate_synthetic_data(csv_path,fields,rows=100,privacy_level = "medium"):
+def generate_synthetic_data(csv_path,fields,rows=100,privacy_level = "medium",epochs=300,batch_size=500):
     print("AI GENERATOR RUNNING")
     df = pd.read_csv(csv_path)
     df.columns = df.columns.str.strip().str.lower()
@@ -49,7 +49,7 @@ def generate_synthetic_data(csv_path,fields,rows=100,privacy_level = "medium"):
     metadata = SingleTableMetadata()
     metadata.detect_from_dataframe(df_ctgan)
 
-    synthesizer =CTGANSynthesizer(metadata)
+    synthesizer =CTGANSynthesizer(metadata,epochs=epochs,batch_size=batch_size)
     synthesizer.fit(df_ctgan)
 
     synthetic_df = synthesizer.sample(num_rows = rows)
