@@ -1,195 +1,242 @@
-import api from "../api/axios"
-import {useNavigate,} from "react-router-dom"
-import {useState,useEffect} from "react"
+import { useState } from "react";
+import { useNavigate } from "react-router-dom";
+
+import DashboardLayout from "../components/layout/DashboardLayout";
+
+import MetricCard from "../components/projects/MetricCard";
+import ProjectCard from "../components/projects/ProjectCard";
+import ProjectForm from "../components/projects/ProjectForm";
+
+import PageHeader from "../components/common/PageHeader";
+import SectionCard from "../components/common/SectionCard";
+import EmptyState from "../components/common/EmptyState";
+import LoadingSpinner from "../components/common/LoadingSpinner";
+import SearchBar from "../components/common/SearchBar";
+
+import {
+  FolderOpen,
+  BarChart3,
+  Shield,
+  Database,
+  Plus,
+} from "lucide-react";
+
+import api from "../api/axios";
+
+import useProjects from "../hooks/useProjects";
+import useDashboard from "../hooks/useDashboard";
 
 function Dashboard() {
-    const navigate = useNavigate()
-    const [projects, setProjects] = useState([])
-    const [name, setName] = useState("")
-    const [description, setDescription] = useState("")
-    const [editId, setEditId] = useState(null)
-    const [dashboardStats,setDashboardStats] = useState(null)
 
-    const fetchProjects = async () => {
-        try {
-            const token = localStorage.getItem("access")
-            const response = await api.get("/projects/list/", { headers: { Authorization: `Bearer ${token}` } })
-            setProjects(response.data)
-            console.log(projects)
-        } catch (error) {
-            console.log(error)
-        }
-    }
+  const navigate = useNavigate();
 
-    const fetchDashboardStats = async() =>{
-        try{
-            const token = localStorage.getItem("access")
-            const response = await api.get(`/dashboard/stats/`,{headers:{Authorization:`Bearer ${token}`}})
-            console.log(response.data)
-            setDashboardStats(response.data)
-        }
-        catch(error){
-            console.log(error)
-        }
-    }
-        
-    useEffect(() => {
-        fetchProjects(),
-        fetchDashboardStats()
-    }, [])
+  const {
+    projects,
+    loading: projectsLoading,
+    error: projectsError,
+    createProject,
+    updateProject,
+    deleteProject,
+  } = useProjects();
 
-   
+  const {
+    dashboardStats,
+    loading: dashboardLoading,
+    error: dashboardError,
+  } = useDashboard();
 
-    const handleCreateProject = async () => {
-        try {
-            const token = localStorage.getItem("access")
-            const response = await api.post("/projects/create/", { name, description }, { headers: { Authorization: `Bearer ${token}` } })
-            console.log(response.data)
-            fetchProjects()
-            fetchDashboardStats() // Refresh the project list
-            setName("")
-            setDescription("")
-        } catch (error) {
-            console.log(error)
-        }
-    }
+  const [name, setName] = useState("");
+  const [description, setDescription] = useState("");
+  const [editId, setEditId] = useState(null);
+  const [search, setSearch] = useState("");
 
-    const handleDeleteProject = async (Id) => {
-        try{
-            const token = localStorage.getItem("access")
-            const response = await api.delete(`/projects/${Id}/delete/`, { headers: { Authorization: `Bearer ${token}` } })
-            console.log(response.data)
-            await fetchProjects()
-            await fetchDashboardStats() // Refresh the project list 
-        } catch (error) {
-            console.log(error)
-        }
-    }
-    const handleGetProfile = async () => {
+  const handleCreateProject = async () => {
+  try {
+    await createProject({
+      name,
+      description,
+    });
 
-        try {
+    setName("");
+    setDescription("");
+  } catch (error) {
+    console.error(error);
+  }
+};
 
-            const token =
-                localStorage.getItem("access")
+const handleUpdateProject = async () => {
+  try {
+    await updateProject(editId, {
+      name,
+      description,
+    });
 
-            const response =
-                await api.get(
-                    "/accounts/profile/",
-                    {
-                        headers: {
-                            Authorization:
-                                `Bearer ${token}`
-                        }
-                    }
-                )
+    setName("");
+    setDescription("");
+    setEditId(null);
+  } catch (error) {
+    console.error(error);
+  }
+};
 
-            console.log(
-                response.data
-            )
+const handleDeleteProject = async (id) => {
+  try {
+    await deleteProject(id);
+  } catch (error) {
+    console.error(error);
+  }
+};
 
-        }
-        catch(error) {
+const handleEditProject = (project) => {
+  setName(project.name);
+  setDescription(project.description);
+  setEditId(project.id);
+};
 
-            console.log(error)
+const handleLogout = () => {
+  localStorage.removeItem("access");
+  localStorage.removeItem("refresh");
+  navigate("/login");
+};
 
-        }
-    }
-    const handleUpdateProject = async () => {
-        try {
-            const token = localStorage.getItem("access")
-            const response = await api.patch(`/projects/${editId}/update/`, { name, description }, { headers: { Authorization: `Bearer ${token}` } })
-            console.log(response.data)
-            fetchProjects()
-            fetchDashboardStats() // Refresh the project list 
-            setName("")
-            setDescription("")
-            setEditId(null)
-        } catch (error) {
-            console.log(error)
-        }
-    }
-    const handleEditProject = ( project) => { setName(project.name),setDescription(project.description),setEditId(project.id)}
-    const handlelogout = () => {
-        localStorage.removeItem("access")
-        localStorage.removeItem("refresh")
-        navigate("/login")
-    }
+const handleGetProfile = async () => {
+  try {
+    const token = localStorage.getItem("access");
 
-    return (
-        <>
-            <h1>Dashboard Page</h1>
-            <div style={{display: "flex",gap: "20px",marginBottom:"20px"}}>
-                <div style={{border:"1px solid grey", padding:"20px", borderRadius:"10px"}}><h3>Projects</h3>
-                <p>{dashboardStats?.total_projects || 0}</p></div>
-                 <div style={{border:"1px solid grey", padding:"20px", borderRadius:"10px"}}><h3>Quality Score</h3>
-                <p>{dashboardStats?.average_quality_score || 0}</p></div>
-                 <div style={{border:"1px solid grey", padding:"20px", borderRadius:"10px"}}><h3>Privacy Score</h3>
-                <p>{dashboardStats?.average_privacy_score || 0 }</p></div>
-                 <div style={{border:"1px solid grey", padding:"20px", borderRadius:"10px"}}><h3>Datasets</h3>
-                <p>{dashboardStats?.total_datasets || 0}</p></div>
-            </div>
+    const response = await api.get("/accounts/profile/", {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    });
 
-            <button
-                onClick={handleGetProfile}
-            >
-                Get Profile
-            </button>
-            <button onClick={() => handlelogout()}>
-                Logout
-            </button>
-            <div
-    style={{
-        border:"1px solid gray",
-        borderRadius:"10px",
-        padding:"20px",
-        width:"500px",
-        marginBottom:"20px"
-    }}>
-         <input
-                type="text"
-                placeholder="Project Name"
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-            />
-            <input 
-                type="text"
-                placeholder="Project Description"
-                value={description}
-                onChange={(e) => setDescription(e.target.value)}
-            />
-            <button
-        onClick={editId ? handleUpdateProject : handleCreateProject}>
-                {editId ? "Update Project" : "Create Project"}
-            </button>
+    console.log(response.data);
+  } catch (error) {
+    console.error(error);
+  }
+};
+return (
+  <DashboardLayout>
+
+    <PageHeader
+      title="Dashboard"
+      description="Manage your synthetic data projects"
+      buttonText="Get Profile"
+      buttonIcon={Plus}
+      onButtonClick={handleGetProfile}
+    />
+
+    {/* Metric Cards */}
+
+    <div className="mb-8 grid grid-cols-1 gap-6 md:grid-cols-2 xl:grid-cols-4">
+
+      <MetricCard
+        title="Projects"
+        value={dashboardStats?.total_projects || 0}
+        icon={FolderOpen}
+      />
+
+      <MetricCard
+        title="Quality Score"
+        value={dashboardStats?.average_quality_score || 0}
+        icon={BarChart3}
+      />
+
+      <MetricCard
+        title="Privacy Score"
+        value={dashboardStats?.average_privacy_score || 0}
+        icon={Shield}
+      />
+
+      <MetricCard
+        title="Datasets"
+        value={dashboardStats?.total_datasets || 0}
+        icon={Database}
+      />
 
     </div>
-     <h2>Recent Projects</h2>
-           <div>
-    {projects.map((project) => (
-        <div
-            key={project.id}
-            style={{
-                border: "1px solid gray",
-                padding: "15px",
-                borderRadius: "10px",
-                marginBottom: "15px"
-            }}
-        >
-            <h3>{project.name}</h3>
 
-            <p>{project.description}</p>
+    {/* Search */}
 
-            <button onClick={() =>navigate(`/projects/${project.id}`)}>Open</button>
+    <div className="mb-6 flex justify-between">
 
-            <button onClick={() =>handleEditProject(project)}>Edit</button>
+      <SearchBar
+        value={search}
+        onChange={setSearch}
+        onClear={() => setSearch("")}
+        placeholder="Search Projects..."
+      />
 
-            <button onClick={() =>handleDeleteProject(project.id)}>Delete</button>
+    </div>
+
+    {/* Project Form */}
+
+    <div className="mb-8">
+
+      <ProjectForm
+        name={name}
+        description={description}
+        setName={setName}
+        setDescription={setDescription}
+        editId={editId}
+        onSubmit={
+          editId
+            ? handleUpdateProject
+            : handleCreateProject
+        }
+      />
+
+    </div>
+
+    {/* Recent Projects */}
+
+    <SectionCard
+      title="Recent Projects"
+      description="Manage all your projects"
+    >
+
+      {projectsLoading ? (
+
+        <LoadingSpinner text="Loading Projects..." />
+
+      ) : projects.length === 0 ? (
+
+        <EmptyState
+          icon={FolderOpen}
+          title="No Projects Found"
+          description="Create your first project to get started."
+          buttonText="Create Project"
+        />
+
+      ) : (
+
+        <div className="grid gap-5">
+
+          {projects
+            .filter((project) =>
+              project.name
+                .toLowerCase()
+                .includes(search.toLowerCase())
+            )
+            .map((project) => (
+
+              <ProjectCard
+                key={project.id}
+                project={project}
+                onOpen={(id) =>
+                  navigate(`/projects/${id}`)
+                }
+                onEdit={handleEditProject}
+                onDelete={handleDeleteProject}
+              />
+
+            ))}
 
         </div>
-    ))}
-</div>         
-        </>
-    )
-}
 
+      )}
+
+    </SectionCard>
+
+  </DashboardLayout>
+);}
 export default Dashboard

@@ -1,366 +1,237 @@
-import { useState,useEffect } from "react";
-import { useParams } from "react-router-dom";
-import api from '../api/axios';
+import { useNavigate, useParams } from "react-router-dom";
 
-function ProjectDetails(){
-    const {projectID} = useParams();
-    const [qualityData,setQualityData] = useState(null)
-    const [privacyData,setPrivacyDate] = useState(null)
-    const [downloadLink,setDownloadLink] = useState("")
-    const [history,setHistory] = useState([]);
-    const tableStyle = {
-    width: "100%",
-    borderCollapse: "collapse",
-    marginTop: "20px"
+import DashboardLayout from "../components/layout/DashboardLayout";
+
+import PageHeader from "../components/common/PageHeader";
+import SectionCard from "../components/common/SectionCard";
+import LoadingSpinner from "../components/common/LoadingSpinner";
+import EmptyState from "../components/common/EmptyState";
+
+import ProjectStatsCard from "../components/projects/ProjectStatsCard";
+import QuickActionCard from "../components/projects/QuickActionCard";
+
+import useProject from "../hooks/useProject";
+
+import {
+  Database,
+  Upload,
+  TableProperties,
+  BrainCircuit,
+  BarChart3,
+  History,
+  Shield,
+  Calendar,
+} from "lucide-react";
+
+function ProjectDetail() {
+
+  const navigate = useNavigate();
+
+  const { projectID } = useParams();
+
+  const {
+    project,
+    loading,
+    error,
+  } = useProject(projectID);
+
+  if (loading) {
+    return (
+      <DashboardLayout>
+        <LoadingSpinner text="Loading Project..." />
+      </DashboardLayout>
+    );
+  }
+
+  if (error) {
+    return (
+      <DashboardLayout>
+
+        <EmptyState
+          icon={Database}
+          title="Unable to load project"
+          description="An unexpected error occurred."
+        />
+
+      </DashboardLayout>
+    );
+  }
+
+    if (!project) {
+    return (
+        <DashboardLayout>
+            <EmptyState
+                icon={Database}
+                title="Project not found"
+                description="The requested project does not exist."
+            />
+        </DashboardLayout>
+    );
 }
+    return (
+  <DashboardLayout>
 
-const tableHeader = {
-    border: "1px solid gray",
-    padding: "10px",
-    textAlign: "left",
-    fontWeight: "bold"
-}
+    <PageHeader
+      title={project.name}
+      description={project.description}
+    />
 
-const tableCell = {
-    border: "1px solid gray",
-    padding: "10px",
-    textAlign: "left"
-}
+    {/* Project Information */}
 
-
-    const fetchQuality = async() => {
-        try {
-            const token = localStorage.getItem("access")
-            const response = await api.get(`/generator/quality/${projectID}/`,{headers:{Authorization : `Bearer ${token}`}})
-            setQualityData(response.data)
-        }
-        catch(error){
-            console.log(error)
-        }
-
-    
-    }
-    const fetchPrivacy = async() => {
-        try {
-            const token = localStorage.getItem("access")
-            const response = await api.get(`/generator/privacy/${projectID}/`,{headers:{Authorization:`Bearer ${token}`}})
-            setPrivacyDate(response.data)
-        }
-        catch(error){
-            console.log(error)
-        }
-    }
-    const fetchDownloadLink =async() =>{
-        try{
-            const token = localStorage.getItem('access')
-            const response = await api.get(`/dashboard/project/${projectID}/download/`,{headers: {Authorization:`Bearer ${token}`}})
-            console.log(response.data)
-            console.log('called')
-            setDownloadLink(response.data.file)
-        }
-        catch(error){
-            console.log(error)
-        }
-    }
-
-    const fetchHistory =async()=>{
-        try{
-            const token = localStorage.getItem("access");
-            const response = await api.get(`/generator/projects/${projectID}/history/`,{headers:{Authorization: `Bearer ${token}`}});
-            setHistory(response.data)
-        }
-        catch(error){
-            console.log(error)
-        }
-    }
-    const downloadHistory = async (generationId) => {
-    try {
-        const token = localStorage.getItem("access");
-
-        const response = await api.get(
-            `/dashboard/download/${generationId}/`,
-            {
-                headers: {
-                    Authorization: `Bearer ${token}`
-                }
-            }
-        );
-
-        window.open(
-            `http://127.0.0.1:8000${response.data.file}`,
-            "_blank"
-        );
-
-    } catch (error) {
-        console.log(error);
-    }
-};
-    const getRatingColor = (rating) => {
-    switch(rating){
-        case "Excellent":
-            return "limegreen";
-        case "Good":
-            return "dodgerblue";
-        case "Fair":
-            return "orange";
-        case "Poor":
-            return "red";
-        default:
-            return "white";
-    }
-}
-    useEffect(()=> {
-        console.log("use effect")
-        fetchQuality();
-        fetchPrivacy();
-        fetchDownloadLink();
-        fetchHistory();
-    },[])
-    return(
-        <>
-        <h1>Project Details</h1>
-        <h2>Project ID: {projectID}</h2>
-        
-        <div
-    style={{
-        display: "flex",
-        gap: "20px",
-        marginTop: "20px",
-        marginBottom: "20px"
-    }}
->
-      <div
-    style={{
-        border: `2px solid ${getRatingColor(
-            qualityData?.quality_rating
-        )}`,
-        borderRadius: "10px",
-        padding: "20px",
-        minWidth: "200px"
-    }}
->
-    <h3>Quality Score</h3>
-
-    <h1>{qualityData?.quality_score || 0}</h1>
-
-    <p
-        style={{
-            color: getRatingColor(
-                qualityData?.quality_rating
-            )
-        }}
+    <SectionCard
+      title="Project Information"
+      description="Basic information about this project."
     >
-        {qualityData?.quality_rating}
-    </p>
-</div>
-<div
-    style={{
-        border: `2px solid ${getRatingColor(
-            privacyData?.privacy_rating
-        )}`,
-        borderRadius: "10px",
-        padding: "20px",
-        minWidth: "200px"
-    }}
->
-    <h3>Privacy Score</h3>
 
-    <h1>{privacyData?.privacy_score || 0}</h1>
+      <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
 
-    <p
-        style={{
-            color: getRatingColor(
-                privacyData?.privacy_rating
-            )
-        }}
-    >
-        {privacyData?.privacy_rating}
-    </p>
-</div>
-</div>
-<h2>Quality Metrics</h2>
-<table style={tableStyle}>
-    <thead>
-        <tr>
-            <th style={tableHeader}>Column</th>
-            <th style={tableHeader}>Difference %</th>
-            <th style={tableHeader}>Original Mean</th>
-            <th style={tableHeader}>Synthetic Mean</th>
-        </tr>
-    </thead>
+        <div>
 
-    <tbody>
-        {qualityData?.quality_metrics &&
-            Object.entries(
-                qualityData.quality_metrics
-            ).map(([column, metric]) => (
-                <tr key={column}>
-                    <td style={tableCell}>
-                        {column}
-                    </td>
+          <p className="text-sm text-muted-foreground">
+            Project Name
+          </p>
 
-                    <td style={tableCell}>
-                        {metric.difference_percentage}
-                    </td>
-
-                    <td style={tableCell}>
-                        {metric.original_mean}
-                    </td>
-
-                    <td style={tableCell}>
-                        {metric.synthetic_mean}
-                    </td>
-                </tr>
-            ))
-        }
-    </tbody>
-</table>
-
-<h2>Privacy Metrics</h2>
-
-<table style={tableStyle}>
-    <thead>
-        <tr>
-            <th style={tableHeader}>Metric</th>
-            <th style={tableHeader}>Value</th>
-        </tr>
-    </thead>
-
-    <tbody>
-        <tr>
-            <td style={tableCell}>Total Synthetic Rows</td>
-            <td style={tableCell}>
-                {privacyData?.total_synthetic_rows || 0}
-            </td>
-        </tr>
-
-        <tr>
-            <td style={tableCell}>Duplicate Rows</td>
-            <td style={tableCell}>
-                {privacyData?.duplicate_rows || 0}
-            </td>
-        </tr>
-
-        <tr>
-            <td style={tableCell}>Duplicate Percentage</td>
-            <td style={tableCell}>
-                {privacyData?.duplicate_percentage || 0}%
-            </td>
-        </tr>
-
-        <tr>
-            <td style={tableCell}>Privacy Score</td>
-            <td style={tableCell}>
-                {privacyData?.privacy_score || 0}
-            </td>
-        </tr>
-
-        <tr>
-            <td style={tableCell}>Privacy Rating</td>
-            <td style={tableCell}>
-                {privacyData?.privacy_rating || "N/A"}
-            </td>
-        </tr>
-    </tbody>
-</table>
-<h2>Categorical Metrics</h2>
-{
-    qualityData?.categorical_metrics &&
-    Object.entries(
-        qualityData.categorical_metrics
-    ).map(([column, values]) => (
-
-        <div
-            key={column}
-            style={{
-                marginBottom: "20px"
-            }}
-        >
-            <h3>{column}</h3>
-
-            <table style={tableStyle}>
-                <thead>
-                    <tr>
-                        <th style={tableHeader}>
-                            Value
-                        </th>
-
-                        <th style={tableHeader}>
-                            Original %
-                        </th>
-
-                        <th style={tableHeader}>
-                            Synthetic %
-                        </th>
-                    </tr>
-                </thead>
-
-                <tbody>
-{
-    Object.keys(values.original).map(
-        (key) => (
-            <tr key={key}>
-                <td style={tableCell}>
-                    {key}
-                </td>
-
-                <td style={tableCell}>
-                    {values.original[key]}
-                </td>
-
-                <td style={tableCell}>
-                    {
-                        values.synthetic[key] || 0
-                    }
-                </td>
-            </tr>
-        )
-    )
-}
-</tbody>
-
-            </table>
+          <h3 className="mt-1 text-lg font-semibold">
+            {project.name}
+          </h3>
 
         </div>
-    ))
-}
-{downloadLink && (
-    <div style={{ marginTop: "30px" }}>
-        <a
-            href={`http://127.0.0.1:8000${downloadLink}`}download>
-            <button>
-                Download Synthetic Dataset
-            </button>
-        </a>
+
+        <div>
+
+          <p className="text-sm text-muted-foreground">
+            Description
+          </p>
+
+          <h3 className="mt-1 text-lg">
+            {project.description || "No description provided."}
+          </h3>
+
+        </div>
+
+        <div className="flex items-center gap-2">
+
+          <Calendar size={18} />
+
+          <div>
+
+            <p className="text-sm text-muted-foreground">
+              Created
+            </p>
+
+            <p>
+              {new Date(project.created_at).toLocaleString()}
+            </p>
+
+          </div>
+
+        </div>
+
+        <div className="flex items-center gap-2">
+
+          <Calendar size={18} />
+
+          <div>
+
+            <p className="text-sm text-muted-foreground">
+              Updated
+            </p>
+
+            <p>
+              {new Date(project.updated_at).toLocaleString()}
+            </p>
+
+          </div>
+
+        </div>
+
+      </div>
+
+    </SectionCard>
+
+    {/* Statistics */}
+
+    <div className="my-8 grid grid-cols-1 gap-6 md:grid-cols-2 xl:grid-cols-4">
+
+      <ProjectStatsCard
+        title="Datasets"
+        value="0"
+        subtitle="Coming Soon"
+        icon={Database}
+      />
+
+      <ProjectStatsCard
+        title="Generated"
+        value="0"
+        subtitle="Coming Soon"
+        icon={BrainCircuit}
+      />
+
+      <ProjectStatsCard
+        title="Quality"
+        value="--"
+        subtitle="Coming Soon"
+        icon={BarChart3}
+      />
+
+      <ProjectStatsCard
+        title="Privacy"
+        value="--"
+        subtitle="Coming Soon"
+        icon={Shield}
+      />
+
     </div>
-)}
-<h2>Generation History</h2>
 
-{
-    history.map((generation,index) => (
-        <div
-            key={generation.id}
-            style={{
-                border: "1px solid gray",
-                padding: "15px",
-                borderRadius: "10px",
-                marginBottom: "15px"
-            }}
-        >
-            <h3>Version {history.length - index}</h3>
+    {/* Quick Actions */}
 
-            <p>Rows: {generation.rows_generated}</p>
+    <SectionCard
+      title="Quick Actions"
+      description="Navigate to project modules."
+    >
 
-            <p>Quality: {generation.quality_score}</p>
+      <div className="grid grid-cols-1 gap-5 md:grid-cols-2">
 
-            <p>Privacy: {generation.privacy_score}</p>
+        <QuickActionCard
+          title="Upload Dataset"
+          description="Upload CSV or Excel datasets."
+          icon={Upload}
+          onClick={() =>
+            navigate(`/projects/${projectID}/upload`)
+          }
+        />
 
-            <p>{generation.created_at}</p>
-            <button onClick={() => downloadHistory(generation.id)}>Download Version</button>
-        </div>
-    ))
-}
-        </>
-    )
-}
-export default ProjectDetails;
+        <QuickActionCard
+          title="Schema Management"
+          description="Configure dataset schema."
+          icon={TableProperties}
+          onClick={() =>
+            navigate(`/projects/${projectID}/schema`)
+          }
+        />
+
+        <QuickActionCard
+          title="Generator"
+          description="Generate synthetic data."
+          icon={BrainCircuit}
+          onClick={() =>
+            navigate(`/projects/${projectID}/generator`)
+          }
+        />
+
+        <QuickActionCard
+          title="Generation Results"
+          description="View generated datasets."
+          icon={History}
+          onClick={() =>
+            navigate(`/projects/${projectID}/generate`)
+          }
+        />
+
+      </div>
+
+    </SectionCard>
+
+  </DashboardLayout>
+);}
+export default ProjectDetail

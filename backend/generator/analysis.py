@@ -1,7 +1,4 @@
 import pandas as pd
-from .models import SyntheticDataset
-
-
 
 def calculate_quality(original_file,synthetic_file):
     original_df = pd.read_csv(original_file)
