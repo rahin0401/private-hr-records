@@ -11,7 +11,7 @@ from uploads.models import UploadedDatasets
 from .ai_generator import generate_synthetic_data
 from .models import SyntheticDataset
 from .serializer import SyntheticDatasetSerializer
-from .analysis import calculate_quality,calculate_privacy
+from .services.analysis import calculate_quality,calculate_privacy
 
 from faker import Faker
 import random
