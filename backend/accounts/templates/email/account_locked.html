@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Account Temporarily Locked</title>
+</head>
+
+<body style="margin:0;padding:0;background-color:#f4f4f4;font-family:Arial,Helvetica,sans-serif;">
+
+<table width="100%" cellpadding="0" cellspacing="0" style="background:#f4f4f4;padding:40px 0;">
+<tr>
+<td align="center">
+
+<table width="600" cellpadding="0" cellspacing="0" style="background:#ffffff;border-radius:8px;padding:40px;">
+
+<tr>
+<td align="center">
+
+<h1 style="margin:0;color:#1e293b;">
+{{ project_name }}
+</h1>
+
+<p style="color:#64748b;font-size:16px;">
+Account Security Notification
+</p>
+
+</td>
+</tr>
+
+<tr>
+<td align="center" style="padding:30px 0;">
+
+<div style="font-size:64px;">
+🔒
+</div>
+
+<h2 style="color:#dc2626;margin:10px 0;">
+Account Temporarily Locked
+</h2>
+
+</td>
+</tr>
+
+<tr>
+<td>
+
+<p>Hello {{ username }},</p>
+
+<p>
+Your account has been temporarily locked because multiple unsuccessful login attempts were detected.
+This security measure helps protect your account from unauthorized access.
+</p>
+
+</td>
+</tr>
+
+<tr>
+<td>
+
+<table width="100%" cellpadding="12" cellspacing="0" style="background:#fef2f2;border-left:5px solid #dc2626;border-radius:6px;margin-top:20px;">
+
+<tr>
+<td>
+
+<strong>Lock Duration:</strong>
+{{ lock_duration }} minutes
+
+</td>
+</tr>
+
+</table>
+
+</td>
+</tr>
+
+<tr>
+<td>
+
+<p style="margin-top:25px;">
+If these login attempts were made by you, please wait until the lock period expires and try again.
+</p>
+
+<p>
+If you do not recognize this activity, we strongly recommend changing your password immediately after regaining access to your account.
+</p>
+
+</td>
+</tr>
+
+<tr>
+<td>
+
+<table width="100%" cellpadding="12" cellspacing="0" style="background:#eff6ff;border-left:5px solid #2563eb;border-radius:6px;margin-top:20px;">
+
+<tr>
+<td>
+
+<strong>Security Tips</strong>
+
+<ul style="margin-top:10px;line-height:1.8;">
+
+<li>Use a strong and unique password.</li>
+
+<li>Never share your login credentials.</li>
+
+<li>Reset your password if you suspect unauthorized access.</li>
+
+</ul>
+
+</td>
+</tr>
+
+</table>
+
+</td>
+</tr>
+
+<tr>
+<td>
+
+<hr>
+
+<p style="font-size:12px;color:#94a3b8;text-align:center;">
+
+This is an automated security notification from
+<strong>{{ project_name }}</strong>.
+
+Please do not reply to this email.
+
+</p>
+
+</td>
+</tr>
+
+</table>
+
+</td>
+</tr>
+</table>
+
+</body>
+</html>

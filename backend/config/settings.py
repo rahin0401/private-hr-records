@@ -44,6 +44,8 @@ INSTALLED_APPS = [
     "rest_framework",
     "rest_framework_simplejwt",
     "corsheaders",
+    "rest_framework_simplejwt.token_blacklist",
+
 
     # Local apps
     "accounts",
@@ -64,6 +66,7 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    
 ]
 
 ROOT_URLCONF = 'config.urls'
@@ -154,3 +157,16 @@ AUTH_USER_MODEL = 'accounts.CustomUser'
 
 MEDIA_URL ='/media/'
 MEDIA_ROOT = BASE_DIR / 'media'
+
+
+PROJECT_NAME = "AI Synthetic HR Data Platform"
+DEFAULT_FROM_EMAIL = "noreply@synthhr.ai"
+ACCOUNT_LOCK_DURATION = 15
+OTP_LENGTH = 6
+OTP_EXPIRY_MINUTES = 5
+OTP_MAX_ATTEMPTS = 5
+OTP_RESEND_LIMIT = 3
+COOKIE_SECURE = False
+COOKIE_SAMESITE = "Lax"
+ACCESS_TOKEN_LIFETIME_SECONDS = 300
+REFRESH_TOKEN_LIFETIME_SECONDS = 86400
