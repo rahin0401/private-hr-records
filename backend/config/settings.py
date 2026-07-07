@@ -12,22 +12,24 @@ https://docs.djangoproject.com/en/6.0/ref/settings/
 
 from pathlib import Path
 from datetime import timedelta
+import environ
 
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
+env = environ.Env()
+environ.Env.read_env(BASE_DIR / ".env")
 
 
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/6.0/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'django-insecure-tadsq)!m%!#lhp_b64)rmu&-gjrb1l((ie8fvs2x-n!#ns5^!k'
+SECRET_KEY = env("SECRET_KEY")
 
-# SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = env.bool("DEBUG")
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = env.list("ALLOWED_HOSTS")
 
 
 # Application definition
@@ -160,13 +162,36 @@ MEDIA_ROOT = BASE_DIR / 'media'
 
 
 PROJECT_NAME = "AI Synthetic HR Data Platform"
-DEFAULT_FROM_EMAIL = "noreply@synthhr.ai"
 ACCOUNT_LOCK_DURATION = 15
 OTP_LENGTH = 6
 OTP_EXPIRY_MINUTES = 5
 OTP_MAX_ATTEMPTS = 5
+OTP_MAX_RESEND_COUNT = 5
 OTP_RESEND_LIMIT = 3
+MAX_LOGIN_ATTEMPTS = 5
+ACCOUNT_LOCK_DURATION = 15
 COOKIE_SECURE = False
 COOKIE_SAMESITE = "Lax"
 ACCESS_TOKEN_LIFETIME_SECONDS = 300
 REFRESH_TOKEN_LIFETIME_SECONDS = 86400
+
+EMAIL_BACKEND = env("EMAIL_BACKEND")
+
+EMAIL_HOST = env("EMAIL_HOST")
+
+EMAIL_PORT = env.int("EMAIL_PORT")
+
+EMAIL_HOST_USER = env("EMAIL_HOST_USER")
+
+EMAIL_HOST_PASSWORD = env("EMAIL_HOST_PASSWORD")
+
+EMAIL_USE_TLS = env.bool("EMAIL_USE_TLS")
+
+DEFAULT_FROM_EMAIL = env("DEFAULT_FROM_EMAIL")
+
+
+GOOGLE_CLIENT_ID = env("GOOGLE_CLIENT_ID")
+
+GITHUB_CLIENT_ID = env("GITHUB_CLIENT_ID")
+
+GITHUB_CLIENT_SECRET = env("GITHUB_CLIENT_SECRET")

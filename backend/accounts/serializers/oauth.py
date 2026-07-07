@@ -1,7 +1,7 @@
 from rest_framework import serializers
 from accounts.utils.validators import validate_github_code,validate_google_id_token
 
-class GoogleLoginSerializer(serializers.Serializer):
+class GoogleOAuthSerializer(serializers.Serializer):
 
     id_token = serializers.CharField(
         write_only=True,
@@ -12,7 +12,7 @@ class GoogleLoginSerializer(serializers.Serializer):
     
 
 
-class GitHubLoginSerializer(serializers.Serializer):
+class GitHubOAuthSerializer(serializers.Serializer):
 
     code = serializers.CharField(
         write_only=True,

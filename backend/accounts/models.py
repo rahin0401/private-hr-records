@@ -1,6 +1,5 @@
 import uuid
 
-
 from django.db import models
 from django.contrib.auth.models import AbstractUser,BaseUserManager
 
@@ -11,21 +10,24 @@ class AuthenticationProvider(models.TextChoices):
     GOOGLE = "GOOGLE",'Google'
     GITHUB = "GITHUB", 'GitHub'
 
-
 class OTPPurpose(models.TextChoices):
     EMAIL_VERIFICATION =("EMAIL_VERIFICATION",'Email Verification',)
     PASSWORD_RESET = ("PASSWORD_RESET","Password Reset")
 
 class AuditAction(models.TextChoices):
-    REGISTER ="REGISTER",'Register'
+    REGISTER = "REGISTER", "Register"
     LOGIN = "LOGIN", "Login"
     LOGOUT = "LOGOUT", "Logout"
+    FAILED_LOGIN = "FAILED_LOGIN", "Failed Login"
+    EMAIL_VERIFIED = "EMAIL_VERIFIED", "Email Verified"
+    RESEND_EMAIL_OTP = "RESEND_EMAIL_OTP", "Resend Email OTP"
+    PASSWORD_RESET = "PASSWORD_RESET", "Password Reset"
+    PASSWORD_CHANGED = "PASSWORD_CHANGED", "Password Changed"
+    TOKEN_REFRESH = "TOKEN_REFRESH", "Token Refresh"
+    VERIFY_PASSWORD_RESET_OTP = "VERIFY_PASSWORD_RESET_OTP","Verify Password Reset OTP"
+    PROFILE_UPDATED = "PROFILE_UPDATED","Profile Updated"
+    PROFILE_PICTURE_UPDATED = "PROFILE_PICTURE_UPDATED","Profile Picture Updated"
 
-    FAILED_LOGIN =("FAILED_LOGIN","Failed Login",)
-    EMAIL_VERIFIED = ("EMAIL_VERIFIED",'Email Verified',)
-    PASSWORD_RESET =("PASSWORD_RESET","Password Reset",)
-    PASSWORD_CHANGED = ("PASSWORD_CHANGED", "Password Changed",)
-    TOKEN_REFRESH =("TOKEN_REFRESH","Token Refresh",)
 
 class AuditStatus(models.TextChoices):
     SUCCESS = "SUCCESS","Success"
@@ -52,11 +54,7 @@ class CustomUserManager(BaseUserManager):
             raise ValueError("Superuser must have is_staff=True")
         if extra_fields.get("is_superuser") is not True:
             raise ValueError("Superuser must have is_superuser=True")
-        return self.create_user(email=email,username=username,password=password,**extra_fields)
-    
-
-
-
+        return self.create_user(email=email,username=username,password=password,**extra_fields)   
 #This model is for supporting local, authentication , google oauth and github oauth
 class CustomUser(AbstractUser):
     uuid = models.UUIDField(default=uuid.uuid4, editable=False,unique=True,)
@@ -81,7 +79,6 @@ class CustomUser(AbstractUser):
     def __str__(self):
         return self.email
     
-
 class EmailOTP(models.Model):
     user = models.ForeignKey(CustomUser,on_delete=models.CASCADE,related_name="email_otps",)
     uuid = models.UUIDField(default=uuid.uuid4,editable=False,unique=True)
@@ -106,7 +103,6 @@ class EmailOTP(models.Model):
     
     def __str__(self):
         return f"{self.email}-{self.purpose}"
-
 
 class LoginAttempt(models.Model):
     email = models.EmailField(db_index=True,)
