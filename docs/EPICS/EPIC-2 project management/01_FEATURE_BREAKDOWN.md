@@ -1,472 +1,527 @@
-# 01_FEATURE_BREAKDOWN.md
+# EPIC-02 — Project Workspace Management
 
-**Project:** Privacy-Preserving Synthetic HR Records Generator
-**Epic:** EPIC-01 – Authentication & User Management
-**Document:** Feature Breakdown
-**Version:** 1.0.0
-**Status:** Draft
+## 01_FEATURE_BREAKDOWN.md
+
+---
+
+# Document Information
+
+| Property | Value |
+|----------|-------|
+| Project | Privacy-Preserving Synthetic HR Records Generator |
+| Epic | EPIC-02 |
+| Document | Feature Breakdown |
+| Version | 1.0.0 |
+| Status | Draft |
+| Depends On | 00_EPIC_OVERVIEW.md |
 
 ---
 
 # 1. Purpose
 
-This document defines all features included in EPIC-01 Authentication & User Management, along with their scope, requirements, dependencies, acceptance criteria, and implementation priority.
+This document defines all functional features that comprise **EPIC-02 – Project Workspace Management**.
+
+Each feature represents a complete business capability rather than a simple CRUD operation. The purpose of this document is to establish clear implementation boundaries, responsibilities, dependencies, and acceptance criteria before development begins.
 
 ---
 
-# 2. Epic Summary
+# 2. Feature Summary
 
-This epic establishes the authentication, authorization, and user management foundation for the entire platform.
-
-Every protected feature implemented in later epics depends on this epic.
-
----
-
-# 3. Feature List
-
-| ID   | Feature                          | Priority | Status  |
-| ---- | -------------------------------- | -------- | ------- |
-| F-01 | User Registration                | High     | Planned |
-| F-02 | User Login                       | High     | Planned |
-| F-03 | User Logout                      | High     | Planned |
-| F-04 | JWT Authentication               | High     | Planned |
-| F-05 | Access Token Refresh             | High     | Planned |
-| F-06 | Token Rotation                   | High     | Planned |
-| F-07 | Token Blacklisting               | High     | Planned |
-| F-08 | Email Verification               | High     | Planned |
-| F-09 | Password Reset                   | High     | Planned |
-| F-10 | Password Change                  | High     | Planned |
-| F-11 | User Profile                     | High     | Planned |
-| F-12 | Session Management               | Medium   | Planned |
-| F-13 | Device Management                | Medium   | Planned |
-| F-14 | Role-Based Access Control (RBAC) | High     | Planned |
-| F-15 | Audit Logging                    | Medium   | Planned |
-| F-16 | Rate Limiting                    | High     | Planned |
-| F-17 | Account Lifecycle Management     | Medium   | Planned |
+| Feature ID | Feature | Priority | Status |
+|------------|---------|----------|--------|
+| F-01 | Project Creation | Critical | Planned |
+| F-02 | Project Management | Critical | Planned |
+| F-03 | Project Listing | High | Planned |
+| F-04 | Project Details | High | Planned |
+| F-05 | Dashboard Statistics | Medium | Planned |
+| F-06 | Ownership & Authorization | Critical | Planned |
+| F-07 | Project Lifecycle | High | Planned |
+| F-08 | Search, Filter & Ordering | Medium | Planned |
+| F-09 | Validation & Constraints | Critical | Planned |
+| F-10 | Audit Integration | Medium | Planned |
 
 ---
 
-# 4. Feature Specifications
+# Feature F-01 — Project Creation
+
+## Purpose
+
+Allow authenticated users to create isolated project workspaces that will own all future datasets, schemas, generation jobs, and exports.
 
 ---
 
-## F-01 User Registration
+## Responsibilities
 
-### Purpose
-
-Allow new users to create an account.
-
-### Functional Requirements
-
-* Register using email, username, and password.
-* Validate required fields.
-* Enforce unique email.
-* Enforce unique username.
-* Hash passwords securely.
-* Create inactive account until email verification (configurable).
-* Trigger verification email.
-
-### Validation
-
-* Required fields.
-* Password policy.
-* Email format.
-* Username rules.
-
-### Dependencies
-
-* Custom User Model
-
-### Acceptance Criteria
-
-* User account created successfully.
-* Duplicate users rejected.
-* Password stored securely.
-* Verification email sent.
+- Create new project
+- Generate unique identifier
+- Assign owner
+- Initialize metadata
+- Record creation timestamp
 
 ---
 
-## F-02 User Login
+## Business Rules
 
-### Purpose
-
-Authenticate existing users.
-
-### Functional Requirements
-
-* Login using email or username.
-* Verify credentials.
-* Return JWT tokens.
-* Reject inactive accounts.
-* Reject invalid credentials.
-
-### Acceptance Criteria
-
-* Valid login returns tokens.
-* Invalid login rejected.
-* Failed attempts logged.
+- User must be authenticated.
+- Project name is required.
+- Project names must be unique per user.
+- Default project status is **Active**.
+- Creator automatically becomes owner.
 
 ---
 
-## F-03 User Logout
+## Validation Rules
 
-### Purpose
-
-Terminate authenticated session.
-
-### Functional Requirements
-
-* Blacklist refresh token.
-* Invalidate session.
-* Record logout event.
-
-### Acceptance Criteria
-
-* Logged-out refresh token unusable.
+- Name required
+- Name length limits
+- Description length limits
+- Prevent duplicate project names for the same owner
 
 ---
 
-## F-04 JWT Authentication
+## Dependencies
 
-### Purpose
-
-Protect APIs.
-
-### Requirements
-
-* Access Token
-* Refresh Token
-* Bearer Authentication
-* Token Validation
-
-### Acceptance Criteria
-
-* Protected APIs require valid JWT.
+- Authentication
+- User Model
 
 ---
 
-## F-05 Access Token Refresh
+## Acceptance Criteria
 
-### Purpose
-
-Issue new access tokens without forcing users to log in again.
-
-### Requirements
-
-* Validate refresh token.
-* Generate new access token.
-* Reject expired tokens.
+- Project created successfully
+- Owner assigned
+- Metadata initialized
+- Audit event recorded
 
 ---
 
-## F-06 Token Rotation
+# Feature F-02 — Project Management
 
-### Purpose
+## Purpose
 
-Improve JWT security.
-
-### Requirements
-
-* Issue new refresh token.
-* Invalidate previous refresh token.
+Allow users to maintain project information throughout its lifecycle.
 
 ---
 
-## F-07 Token Blacklisting
+## Responsibilities
 
-### Purpose
-
-Prevent reuse of revoked refresh tokens.
-
-### Requirements
-
-* Store revoked tokens.
-* Reject blacklisted tokens.
+- Rename project
+- Update description
+- Update metadata
+- Archive project
+- Restore project
+- Soft delete project
 
 ---
 
-## F-08 Email Verification
+## Business Rules
 
-### Purpose
-
-Verify email ownership.
-
-### Requirements
-
-* Send verification email.
-* Verify token.
-* Activate account.
-* Handle expired tokens.
+- Only owner can modify.
+- Archived projects remain readable.
+- Deleted projects cannot be modified.
+- Soft delete preserves relationships.
 
 ---
 
-## F-09 Password Reset
+## Validation Rules
 
-### Purpose
-
-Allow users to recover account access.
-
-### Requirements
-
-* Request password reset.
-* Generate secure reset token.
-* Send email.
-* Reset password.
-* Expire reset tokens.
+- Duplicate names not allowed
+- Invalid status transitions rejected
 
 ---
 
-## F-10 Password Change
+## Acceptance Criteria
 
-### Purpose
-
-Allow authenticated users to update passwords.
-
-### Requirements
-
-* Verify current password.
-* Validate new password.
-* Update password securely.
+- Updates persist correctly
+- Lifecycle rules enforced
+- Ownership validated
 
 ---
 
-## F-11 User Profile
+# Feature F-03 — Project Listing
 
-### Purpose
+## Purpose
 
-Manage user information.
-
-### Requirements
-
-* View profile.
-* Update profile.
-* Upload avatar (future).
-* View account status.
+Provide authenticated users with an efficient way to view all owned projects.
 
 ---
 
-## F-12 Session Management
+## Responsibilities
 
-### Purpose
-
-Manage active user sessions.
-
-### Requirements
-
-* List active sessions.
-* Logout current session.
-* Logout all sessions.
+- List projects
+- Pagination
+- Sorting
+- Filtering
+- Search
 
 ---
 
-## F-13 Device Management
+## Business Rules
 
-### Purpose
-
-Track trusted devices.
-
-### Requirements
-
-* Device identification.
-* Last login.
-* Last activity.
-* Revoke device.
+- Only owned projects returned.
+- Archived projects optionally visible.
+- Deleted projects hidden by default.
 
 ---
 
-## F-14 Role-Based Access Control
+## Acceptance Criteria
 
-### Purpose
-
-Restrict access.
-
-### Initial Roles
-
-* Admin
-* User
-
-### Requirements
-
-* Permission classes.
-* Role validation.
-* Protected resources.
+- Pagination works
+- Filters work
+- Ownership enforced
 
 ---
 
-## F-15 Audit Logging
+# Feature F-04 — Project Details
 
-### Purpose
+## Purpose
 
-Track security events.
-
-### Log Events
-
-* Registration
-* Login
-* Logout
-* Password Change
-* Password Reset
-* Failed Login
-* Profile Update
+Provide complete information about a selected project.
 
 ---
 
-## F-16 Rate Limiting
+## Responsibilities
 
-### Purpose
+Display:
 
-Prevent abuse.
-
-### Apply To
-
-* Login
-* Register
-* Password Reset
-* Email Verification
+- Basic information
+- Owner
+- Status
+- Creation date
+- Last update
+- Future statistics
 
 ---
 
-## F-17 Account Lifecycle
+## Future Extensions
 
-### Requirements
+Placeholder support for:
 
-* Active
-* Inactive
-* Suspended
-* Deleted (Soft Delete)
-
-Future:
-
-* Permanent deletion after retention period.
+- Dataset count
+- Schema count
+- Generation jobs
+- Generated datasets
+- Export history
 
 ---
 
-# 5. Feature Dependencies
+## Acceptance Criteria
 
-```text
-Custom User Model
-        │
-        ▼
-Registration
-        │
-        ▼
-Email Verification
-        │
-        ▼
-Login
-        │
-        ▼
-JWT Authentication
-        │
-        ▼
-Protected APIs
-        │
-        ▼
-Profile Management
-        │
-        ▼
-Password Management
-        │
-        ▼
-Session Management
-        │
-        ▼
-RBAC
-        │
-        ▼
-Audit Logging
+Project information retrieved successfully.
+
+---
+
+# Feature F-05 — Dashboard Statistics
+
+## Purpose
+
+Provide high-level metrics for project activity.
+
+---
+
+## Responsibilities
+
+Display:
+
+- Total datasets
+- Generated datasets
+- Generation jobs
+- Storage usage
+- Recent activity
+
+---
+
+## Version 1
+
+Statistics unavailable from future modules shall return default values without changing the API contract.
+
+---
+
+## Acceptance Criteria
+
+Dashboard endpoint returns consistent structure.
+
+---
+
+# Feature F-06 — Ownership & Authorization
+
+## Purpose
+
+Protect project resources from unauthorized access.
+
+---
+
+## Responsibilities
+
+- Ownership verification
+- Authorization checks
+- Resource isolation
+
+---
+
+## Business Rules
+
+- Owners have full control.
+- Non-owners have no access.
+- Future RBAC supported.
+
+---
+
+## Acceptance Criteria
+
+Unauthorized access rejected.
+
+---
+
+# Feature F-07 — Project Lifecycle
+
+## Purpose
+
+Manage project state transitions.
+
+---
+
+## Lifecycle
+
+```
+Create
+
+↓
+
+Active
+
+↓
+
+Archived
+
+↓
+
+Restored
+
+↓
+
+Soft Deleted
+
+↓
+
+Permanent Delete (Future)
 ```
 
 ---
 
-# 6. Implementation Priority
+## Responsibilities
 
-## Phase 1 (Core)
-
-* Custom User Model
-* Registration
-* Login
-* JWT
-* Logout
-* Profile
+- Archive
+- Restore
+- Soft delete
 
 ---
 
-## Phase 2 (Security)
+## Business Rules
 
-* Email Verification
-* Password Reset
-* Password Change
-* Refresh Tokens
-* Token Rotation
-* Blacklisting
+- Active → Archived
+- Archived → Active
+- Active → Deleted
+- Deleted resources hidden
 
 ---
 
-## Phase 3 (Advanced)
+## Acceptance Criteria
 
-* Sessions
-* Devices
-* RBAC
-* Audit Logs
-* Rate Limiting
+Lifecycle transitions validated correctly.
 
 ---
 
-# 7. Definition of Done
+# Feature F-08 — Search, Filter & Ordering
 
-The feature set is complete when:
+## Purpose
 
-* All APIs implemented.
-* Frontend integrated.
-* Validation complete.
-* Unit tests passing.
-* API tests passing.
-* Security tests passing.
-* Documentation updated.
-* Code reviewed.
-* No critical defects remain.
+Improve usability for users with many projects.
 
 ---
 
-# 8. Estimated Effort
+## Search
 
-| Feature            | Complexity |
-| ------------------ | ---------- |
-| Registration       | Medium     |
-| Login              | Medium     |
-| Logout             | Low        |
-| JWT                | Medium     |
-| Refresh Tokens     | Medium     |
-| Token Rotation     | Medium     |
-| Blacklisting       | Medium     |
-| Email Verification | High       |
-| Password Reset     | High       |
-| Password Change    | Low        |
-| Profile            | Medium     |
-| Sessions           | High       |
-| Device Management  | High       |
-| RBAC               | Medium     |
-| Audit Logs         | Medium     |
-| Rate Limiting      | Medium     |
-| Account Lifecycle  | Medium     |
+Support searching by:
+
+- Project name
+- Description
 
 ---
 
-# 9. Related Documents
+## Filtering
 
-* 00_EPIC_OVERVIEW.md
-* 02_USER_STORIES.md
-* 04_BACKEND_IMPLEMENTATION.md
-* 05_FRONTEND_IMPLEMENTATION.md
-* 06_API_IMPLEMENTATION.md
-* 07_SECURITY_IMPLEMENTATION.md
-* 08_TESTING_PLAN.md
+Support filtering by:
+
+- Status
+- Created date
+- Updated date
+
+---
+
+## Ordering
+
+Support ordering by:
+
+- Name
+- Created date
+- Updated date
+
+---
+
+## Acceptance Criteria
+
+Filtering, search, and ordering work independently and together.
+
+---
+
+# Feature F-09 — Validation & Constraints
+
+## Purpose
+
+Ensure project integrity before persistence.
+
+---
+
+## Validation Rules
+
+- Required fields
+- Maximum lengths
+- Duplicate prevention
+- Owner validation
+- Status validation
+
+---
+
+## Constraints
+
+- One owner per project
+- Name uniqueness per owner
+- Soft delete integrity
+
+---
+
+## Acceptance Criteria
+
+Invalid requests rejected with meaningful errors.
+
+---
+
+# Feature F-10 — Audit Integration
+
+## Purpose
+
+Maintain traceability of project operations.
+
+---
+
+## Events
+
+- Project Created
+- Updated
+- Archived
+- Restored
+- Deleted
+
+---
+
+## Logged Information
+
+- User
+- Action
+- Timestamp
+- Resource ID
+- IP Address (future)
+
+---
+
+## Acceptance Criteria
+
+Every project operation produces an audit event.
+
+---
+
+# 3. Feature Dependencies
+
+```
+Authentication
+
+↓
+
+Project Creation
+
+↓
+
+Ownership Validation
+
+↓
+
+Project Management
+
+↓
+
+Project Details
+
+↓
+
+Dashboard Statistics
+
+↓
+
+Future Modules
+```
+
+---
+
+# 4. Out of Scope
+
+The following belong to later epics:
+
+- Dataset Upload
+- Schema Configuration
+- Differential Privacy Configuration
+- AI Model Selection
+- Synthetic Data Generation
+- Export
+- Notifications
+- Organizations
+- Team Collaboration
+
+---
+
+# 5. Future Enhancements
+
+The architecture supports future addition of:
+
+- Shared Projects
+- Team Members
+- Organization Workspaces
+- Project Templates
+- Favorites
+- Tags
+- Project Versioning
+- AI Experiment Tracking
+- Usage Analytics
+
+---
+
+# 6. Definition of Done
+
+A feature is complete only when:
+
+- Business requirements implemented
+- Validation complete
+- Authorization enforced
+- API completed
+- Backend tests passed
+- Documentation updated
+- Code reviewed
+- Security review completed
 
 ---
 
 # Version History
 
-| Version | Description               |
-| ------- | ------------------------- |
-| 1.0.0   | Initial Feature Breakdown |
+| Version | Description |
+|----------|-------------|
+| 1.0.0 | Initial Feature Breakdown for EPIC-02 |
