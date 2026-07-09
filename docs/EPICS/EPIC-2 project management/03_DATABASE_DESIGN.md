@@ -1,379 +1,594 @@
-# 03_DATABASE_DESIGN.md
+# EPIC-02 — Project Workspace Management
 
-**Project:** Privacy-Preserving Synthetic HR Records Generator
-**Epic:** EPIC-01 – Authentication & User Management
-**Document:** Database Design
-**Version:** 1.0.0
-**Status:** Draft
+## 03_DATABASE_DESIGN.md
+
+---
+
+# Document Information
+
+| Property | Value |
+|----------|-------|
+| Project | Privacy-Preserving Synthetic HR Records Generator |
+| Epic | EPIC-02 |
+| Document | Database Design |
+| Version | 1.0.0 |
+| Status | Draft |
+| Depends On | 00_EPIC_OVERVIEW.md, 01_FEATURE_BREAKDOWN.md, 02_USER_STORIES.md |
 
 ---
 
 # 1. Purpose
 
-This document defines the database design for the Authentication & User Management module.
+This document defines the database architecture for **EPIC-02 – Project Workspace Management**.
 
-It specifies the entities, relationships, constraints, indexes, and migration strategy required to implement authentication and user management.
+It specifies the data model, entity relationships, constraints, indexes, lifecycle behavior, and future extensibility while maintaining consistency with the project's Clean Architecture principles.
 
----
-
-# 2. Database Technology
-
-* Database: PostgreSQL
-* ORM: Django ORM
-* Framework: Django 5.x + Django REST Framework
+The database design must support future epics without requiring schema redesign.
 
 ---
 
-# 3. Database Entities
+# 2. Design Principles
 
-This epic contains the following entities:
+The Project database model shall follow:
 
-| Entity      | Purpose                              |
-| ----------- | ------------------------------------ |
-| User        | Stores user account information      |
-| UserSession | Tracks active user sessions/devices  |
-| AuditLog    | Stores authentication-related events |
-
-> **Note:** JWT blacklist tables are provided by `djangorestframework-simplejwt` when token blacklisting is enabled and should not be recreated.
+- Third Normal Form (3NF)
+- Data Integrity
+- Referential Integrity
+- Soft Delete Strategy
+- Future Extensibility
+- Audit Compatibility
+- High Query Performance
+- PostgreSQL Optimization
 
 ---
 
-# 4. Entity Relationship Diagram
+# 3. Core Entity
 
-```text
+```
 User
- │
- ├──────────────< UserSession
- │
- └──────────────< AuditLog
+
+│
+
+└── Project
+
+      │
+
+      ├── Dataset (EPIC-03)
+
+      ├── DatasetField (EPIC-04)
+
+      ├── Privacy Configuration (EPIC-05)
+
+      ├── Generation Jobs (EPIC-06)
+
+      ├── Generated Dataset (EPIC-06)
+
+      ├── Export Jobs (EPIC-08)
+
+      └── Activity Logs (Future)
+```
+
+The **Project** entity acts as the root business entity for every future resource.
+
+---
+
+# 4. Entity Overview
+
+## Project
+
+Represents an isolated workspace owned by a single authenticated user.
+
+Every dataset, schema, generation job, privacy configuration, and generated dataset belongs to exactly one project.
+
+---
+
+# 5. Project Table
+
+## Table Name
+
+```
+projects
 ```
 
 ---
 
-# 5. User Entity
+## Columns
 
-### Description
+| Column | Type | Nullable | Description |
+|----------|------|----------|-------------|
+| id | UUID | No | Primary Key |
+| owner_id | FK(User) | No | Project Owner |
+| name | VARCHAR(150) | No | Project Name |
+| slug | VARCHAR(180) | No | URL Friendly Identifier |
+| description | TEXT | Yes | Project Description |
+| status | VARCHAR(20) | No | Lifecycle Status |
+| created_at | TIMESTAMP | No | Creation Time |
+| updated_at | TIMESTAMP | No | Last Modification |
+| archived_at | TIMESTAMP | Yes | Archive Timestamp |
+| deleted_at | TIMESTAMP | Yes | Soft Delete Timestamp |
+| created_by | FK(User) | No | Creator |
+| updated_by | FK(User) | Yes | Last Modifier |
 
-Represents a platform user.
+---
 
-### Recommended Fields
+# 6. Primary Key
 
-| Field          | Type            | Constraints      |
-| -------------- | --------------- | ---------------- |
-| id             | UUID            | Primary Key      |
-| username       | String          | Unique, Indexed  |
-| email          | Email           | Unique, Indexed  |
-| first_name     | String          | Nullable         |
-| last_name      | String          | Nullable         |
-| password       | Hashed Password | Required         |
-| role           | Enum            | Default: USER    |
-| status         | Enum            | Default: PENDING |
-| is_active      | Boolean         | Default: False   |
-| is_staff       | Boolean         | Default: False   |
-| is_superuser   | Boolean         | Default: False   |
-| email_verified | Boolean         | Default: False   |
-| last_login     | DateTime        | Nullable         |
-| created_at     | DateTime        | Auto Generated   |
-| updated_at     | DateTime        | Auto Generated   |
-
-### Status Enum
-
-```text
-PENDING
-ACTIVE
-SUSPENDED
-DEACTIVATED
+```
+id (UUID)
 ```
 
-### Role Enum
+UUIDs prevent predictable identifiers and improve security for public-facing APIs.
 
-```text
-USER
-ADMIN
+---
+
+# 7. Foreign Keys
+
+| Column | References |
+|----------|------------|
+| owner_id | User |
+| created_by | User |
+| updated_by | User |
+
+---
+
+# 8. Project Status
+
+Allowed values:
+
+```
+ACTIVE
+
+ARCHIVED
+
+DELETED
+```
+
+Future versions may introduce:
+
+- DRAFT
+- READ_ONLY
+- LOCKED
+
+---
+
+# 9. Entity Relationships
+
+```
+User
+
+1
+
+│
+
+N
+
+↓
+
+Project
+```
+
+Future relationships:
+
+```
+Project
+
+1
+
+│
+
+N
+
+↓
+
+Dataset
+```
+
+```
+Project
+
+1
+
+│
+
+N
+
+↓
+
+GenerationJob
+```
+
+```
+Project
+
+1
+
+│
+
+N
+
+↓
+
+GeneratedDataset
 ```
 
 ---
 
-# 6. UserSession Entity
+# 10. Constraints
 
-### Description
+## Primary Key
 
-Stores active login sessions.
-
-### Fields
-
-| Field            | Type             |
-| ---------------- | ---------------- |
-| id               | UUID             |
-| user             | ForeignKey(User) |
-| refresh_token_id | UUID/String      |
-| device_name      | String           |
-| device_type      | String           |
-| ip_address       | String           |
-| user_agent       | Text             |
-| last_activity    | DateTime         |
-| expires_at       | DateTime         |
-| created_at       | DateTime         |
-
-### Purpose
-
-Supports:
-
-* Active sessions
-* Logout specific device
-* Logout all devices
-* Session history
+```
+PRIMARY KEY (id)
+```
 
 ---
 
-# 7. AuditLog Entity
+## Foreign Key
 
-### Description
+```
+owner_id
 
-Stores security-related events.
-
-### Fields
-
-| Field       | Type                       |
-| ----------- | -------------------------- |
-| id          | UUID                       |
-| user        | ForeignKey(User, Nullable) |
-| event_type  | Enum                       |
-| ip_address  | String                     |
-| user_agent  | Text                       |
-| description | Text                       |
-| created_at  | DateTime                   |
-
-### Event Types
-
-* REGISTER
-* LOGIN
-* LOGIN_FAILED
-* LOGOUT
-* PASSWORD_CHANGED
-* PASSWORD_RESET
-* PROFILE_UPDATED
-* EMAIL_VERIFIED
-* ACCOUNT_LOCKED
+REFERENCES users(id)
+```
 
 ---
 
-# 8. Relationships
+## Unique Constraint
 
-| Parent | Child       | Relation    |
-| ------ | ----------- | ----------- |
-| User   | UserSession | One-to-Many |
-| User   | AuditLog    | One-to-Many |
+Project names must be unique for each owner.
 
----
+```
+UNIQUE(owner_id, name)
+```
 
-# 9. Constraints
-
-## User
-
-* Username unique
-* Email unique
-* Password required
-* Role required
-* Status required
-
-## UserSession
-
-* Must belong to a User
-* Expiration required
-
-## AuditLog
-
-* Event type required
-* Timestamp required
+Different users may create projects with identical names.
 
 ---
 
-# 10. Indexes
+## NOT NULL Constraints
 
-Create indexes for:
+Required fields:
 
-## User
-
-* username
-* email
-* role
-* status
-* is_active
-
-## UserSession
-
-* user
-* expires_at
-
-## AuditLog
-
-* user
-* event_type
-* created_at
+- owner_id
+- name
+- slug
+- status
+- created_at
 
 ---
 
-# 11. Cascade Rules
+# 11. Soft Delete Strategy
 
-| Parent             | Child    | Action |
-| ------------------ | -------- | ------ |
-| User → UserSession | CASCADE  |        |
-| User → AuditLog    | SET NULL |        |
+Projects are never physically removed during normal operations.
 
-Reason:
+Instead:
 
-* Sessions should be removed with the user.
-* Audit logs should be preserved even if the user is removed.
+```
+deleted_at
 
----
+!= NULL
+```
 
-# 12. Validation Rules
+indicates the project has been deleted.
 
-### Email
+Benefits:
 
-* Valid email format
-* Unique
-
-### Username
-
-* 3–30 characters
-* Unique
-* Letters, numbers, underscore
-
-### Password
-
-* Django password validators
-* Minimum length
-* Common password check
-* Numeric-only password rejection
+- Prevent orphaned records
+- Preserve audit history
+- Allow restoration
+- Maintain referential integrity
 
 ---
 
-# 13. Migration Order
+# 12. Lifecycle Rules
 
-1. Create Custom User Model
-2. Apply Authentication Migrations
-3. Create UserSession Model
-4. Create AuditLog Model
-5. Apply JWT Blacklist Migrations
-6. Verify Constraints and Indexes
-
----
-
-# 14. Data Lifecycle
-
-### User
-
-PENDING
-
-↓
-
+```
 ACTIVE
 
 ↓
 
-SUSPENDED (Optional)
-
-↓
-
-DEACTIVATED
-
----
-
-### Session
-
-CREATED
+ARCHIVED
 
 ↓
 
 ACTIVE
-
-↓
-
-EXPIRED / REVOKED
 
 ↓
 
 DELETED
+```
+
+Rules:
+
+- Archived projects remain accessible.
+- Deleted projects are hidden.
+- Future restoration supported.
 
 ---
 
-### Audit Log
+# 13. Index Strategy
 
-Created
+Indexes should be created on:
 
-↓
+```
+owner_id
 
-Stored
+name
 
-↓
+status
 
-Archived (Future)
+slug
+
+created_at
+
+updated_at
+
+deleted_at
+```
+
+Composite index:
+
+```
+(owner_id, status)
+```
+
+Composite index:
+
+```
+(owner_id, name)
+```
+
+These optimize ownership queries and dashboard performance.
 
 ---
 
-# 15. Performance Considerations
+# 14. Slug Generation
 
-* UUID primary keys
-* Indexed authentication fields
-* Foreign key indexes
-* Efficient session lookups
-* Query optimization through ORM (`select_related` / `prefetch_related`) where appropriate
+Each project receives a unique slug.
+
+Example
+
+```
+employee-data
+
+synthetic-hr
+
+banking-demo
+
+payroll-system
+```
+
+Slug uniqueness is enforced per owner.
 
 ---
 
-# 16. Security Considerations
+# 15. Audit Fields
 
-* Never store plaintext passwords
-* Store only hashed passwords
-* Store minimal session information
-* Avoid storing secrets in audit logs
-* Record authentication activity for auditing
+Every project stores:
+
+```
+created_by
+
+updated_by
+
+created_at
+
+updated_at
+```
+
+These fields simplify future audit reporting.
+
+---
+
+# 16. Data Integrity Rules
+
+The database shall ensure:
+
+- Owner exists
+- Status valid
+- Name unique per owner
+- Soft delete consistency
+- No orphaned references
 
 ---
 
 # 17. Future Expansion
 
-The schema should support:
+Future tables will reference Project.
 
-* Multi-Factor Authentication (MFA)
-* OAuth Providers
-* Single Sign-On (SSO)
-* Organization membership
-* Multi-tenancy
-* Advanced roles and permissions
-* User preferences
-* Profile images
+```
+Project
+
+↓
+
+Dataset
+
+↓
+
+DatasetField
+
+↓
+
+GenerationJob
+
+↓
+
+GeneratedDataset
+
+↓
+
+ExportJob
+```
+
+No future module shall bypass the Project entity.
 
 ---
 
-# 18. Definition of Done
+# 18. Example Entity Diagram
 
-Database implementation is complete when:
-
-* All models created
-* Relationships verified
-* Migrations successful
-* Constraints applied
-* Indexes created
-* Admin panel configured
-* Unit tests passing
+```
++----------------------+
+| User                 |
++----------------------+
+| id                   |
+| username             |
+| email                |
++----------+-----------+
+           |
+           |
+           | 1
+           |
+           | N
++----------v-----------+
+| Project              |
++----------------------+
+| id (UUID)            |
+| owner_id             |
+| name                 |
+| slug                 |
+| description          |
+| status               |
+| created_at           |
+| updated_at           |
+| archived_at          |
+| deleted_at           |
+| created_by           |
+| updated_by           |
++----------------------+
+```
 
 ---
 
-# 19. Related Documents
+# 19. Database Naming Standards
 
-* 00_EPIC_OVERVIEW.md
-* 01_FEATURE_BREAKDOWN.md
-* 02_USER_STORIES.md
-* 04_BACKEND_IMPLEMENTATION.md
-* 06_API_IMPLEMENTATION.md
+Tables
+
+Plural
+
+Examples:
+
+```
+projects
+
+datasets
+
+dataset_fields
+
+generation_jobs
+```
+
+Columns
+
+Snake case
+
+Examples:
+
+```
+created_at
+
+updated_at
+
+owner_id
+
+deleted_at
+```
+
+Foreign Keys
+
+```
+owner_id
+
+project_id
+
+dataset_id
+```
+
+---
+
+# 20. Migration Strategy
+
+Migration Order
+
+```
+User
+
+↓
+
+Project
+
+↓
+
+Dataset
+
+↓
+
+Dataset Field
+
+↓
+
+Generation
+
+↓
+
+Export
+```
+
+No future migration shall modify the ownership architecture established by Project.
+
+---
+
+# 21. Performance Considerations
+
+The schema is designed to support:
+
+- Millions of projects
+- Efficient ownership filtering
+- Fast dashboard statistics
+- Pagination
+- Soft delete filtering
+- Future partitioning if required
+
+---
+
+# 22. Security Considerations
+
+Database design shall enforce:
+
+- Ownership isolation
+- Foreign key integrity
+- UUID identifiers
+- Soft deletion
+- No direct cross-user relationships
+
+Authorization remains enforced at the application layer.
+
+---
+
+# 23. Definition of Done
+
+Database design is complete when:
+
+- Schema normalized
+- Constraints defined
+- Indexes documented
+- Relationships complete
+- Future compatibility verified
+- Migration plan approved
+
+---
+
+# 24. Related Documents
+
+- 00_EPIC_OVERVIEW.md
+- 01_FEATURE_BREAKDOWN.md
+- 02_USER_STORIES.md
+- 04_BACKEND_IMPLEMENTATION.md
+- 06_API_IMPLEMENTATION.md
 
 ---
 
 # Version History
 
-| Version | Description                                                           |
-| ------- | --------------------------------------------------------------------- |
-| 1.0.0   | Initial database design for EPIC-01 Authentication & User Management. |
+| Version | Description |
+|----------|-------------|
+| 1.0.0 | Initial database design for EPIC-02 Project Workspace Management |

@@ -1,392 +1,511 @@
-# 02_USER_STORIES.md
+# EPIC-02 — Project Workspace Management
 
-**Project:** Privacy-Preserving Synthetic HR Records Generator
-**Epic:** EPIC-01 – Authentication & User Management
-**Document:** User Stories & Acceptance Criteria
-**Version:** 1.0.0
-**Status:** Draft
+## 02_USER_STORIES.md
+
+---
+
+# Document Information
+
+| Property | Value |
+|----------|-------|
+| Project | Privacy-Preserving Synthetic HR Records Generator |
+| Epic | EPIC-02 |
+| Document | User Stories |
+| Version | 1.0.0 |
+| Status | Draft |
+| Depends On | 00_EPIC_OVERVIEW.md, 01_FEATURE_BREAKDOWN.md |
 
 ---
 
 # 1. Purpose
 
-This document defines the user stories for EPIC-01 Authentication & User Management. Each story describes the user's goal, business value, acceptance criteria, priority, and dependencies.
+This document defines the functional user stories for **EPIC-02 – Project Workspace Management**.
+
+The purpose of these stories is to translate business requirements into implementable functionality while providing clear acceptance criteria for developers, testers, and product owners.
+
+Each story represents a user-centered requirement that can be independently implemented, tested, and reviewed.
 
 ---
 
-# 2. Story Format
+# 2. Actors
 
-Each user story follows the format:
-
-> **As a** `<user>`
-> **I want to** `<goal>`
-> **So that** `<benefit>`
-
-A story is complete only when all acceptance criteria are satisfied.
+| Actor | Description |
+|--------|-------------|
+| Standard User | Creates and manages personal project workspaces |
+| Administrator | Future role for platform administration |
+| System | Performs automated validation, auditing, and lifecycle management |
 
 ---
 
-# 3. User Roles
-
-### User
-
-A registered person who uses the platform.
-
-### Administrator
-
-A privileged user responsible for platform administration.
+# 3. User Stories
 
 ---
 
-# 4. User Stories
+# Feature F-01 — Project Creation
 
 ---
 
-## US-01: User Registration
+## US-001 — Create a Project
 
-**Priority:** High
+**As a** registered user
 
-**Story**
+**I want to** create a new project
 
-> As a new user, I want to register an account so that I can access the platform.
+**So that** I can organize synthetic HR data generation activities inside an isolated workspace.
 
 ### Acceptance Criteria
 
-* User can register with username, email, and password.
-* Username must be unique.
-* Email must be unique.
-* Password must satisfy password policy.
-* Password is securely hashed.
-* Account is created successfully.
-* Verification email is sent (if enabled).
+- User is authenticated.
+- Project name is required.
+- Project owner is automatically assigned.
+- Project is created successfully.
+- Project status defaults to **Active**.
+- Audit log is created.
 
 ---
 
-## US-02: Email Verification
+## US-002 — Prevent Duplicate Project Names
 
-**Priority:** High
+**As a** user
 
-**Story**
+**I want** duplicate project names to be rejected within my account
 
-> As a registered user, I want to verify my email so that my account can be activated.
+**So that** my projects remain uniquely identifiable.
 
 ### Acceptance Criteria
 
-* Verification email contains a secure verification link.
-* Verification token expires after configured duration.
-* Expired tokens are rejected.
-* Verified account becomes active.
+- Duplicate names for the same owner are rejected.
+- Appropriate validation message is returned.
+- Different users may use identical project names.
 
 ---
 
-## US-03: Login
+# Feature F-02 — Project Management
 
-**Priority:** High
+---
 
-**Story**
+## US-003 — Update Project Information
 
-> As a registered user, I want to log in securely so that I can access protected resources.
+**As a** project owner
+
+**I want to** edit my project information
+
+**So that** project details remain accurate.
 
 ### Acceptance Criteria
 
-* User can log in using email or username.
-* Correct credentials return JWT tokens.
-* Invalid credentials return an error.
-* Inactive users cannot log in.
-* Login event is recorded.
+- Owner can update project.
+- Name validation applies.
+- Changes saved successfully.
+- Audit log created.
 
 ---
 
-## US-04: Logout
+## US-004 — Archive Project
 
-**Priority:** High
+**As a** project owner
 
-**Story**
+**I want to** archive inactive projects
 
-> As an authenticated user, I want to log out so that my session is terminated securely.
+**So that** my workspace remains organized without losing data.
 
 ### Acceptance Criteria
 
-* Refresh token is invalidated.
-* User loses access after logout.
-* Logout event is recorded.
+- Project status changes to Archived.
+- Project becomes read-only where applicable.
+- Audit event recorded.
 
 ---
 
-## US-05: Access Protected Resources
+## US-005 — Restore Archived Project
 
-**Priority:** High
+**As a** project owner
 
-**Story**
+**I want to** restore archived projects
 
-> As an authenticated user, I want to access protected APIs so that I can use the application.
+**So that** I can continue working on them.
 
 ### Acceptance Criteria
 
-* Valid JWT grants access.
-* Missing token returns 401.
-* Expired token returns 401.
-* Invalid token returns 401.
+- Archived project restored successfully.
+- Status becomes Active.
+- Existing resources remain intact.
 
 ---
 
-## US-06: Refresh Access Token
+## US-006 — Delete Project
 
-**Priority:** High
+**As a** project owner
 
-**Story**
+**I want to** delete projects
 
-> As an authenticated user, I want to refresh my access token so that I don't need to log in repeatedly.
+**So that** unused workspaces are removed from my account.
 
 ### Acceptance Criteria
 
-* Valid refresh token issues new access token.
-* Expired refresh token is rejected.
-* Blacklisted refresh token is rejected.
+- Soft delete performed.
+- Project hidden from listings.
+- Resources preserved internally.
+- Audit log recorded.
 
 ---
 
-## US-07: Change Password
+# Feature F-03 — Project Listing
 
-**Priority:** High
+---
 
-**Story**
+## US-007 — View My Projects
 
-> As an authenticated user, I want to change my password so that I can keep my account secure.
+**As a** user
+
+**I want to** view all my projects
+
+**So that** I can easily access my workspaces.
 
 ### Acceptance Criteria
 
-* Current password is verified.
-* New password meets policy.
-* Password updates successfully.
-* Existing sessions are handled according to configured policy.
+- Only owned projects displayed.
+- Pagination supported.
+- Response time acceptable.
 
 ---
 
-## US-08: Forgot Password
+## US-008 — Search Projects
 
-**Priority:** High
+**As a** user
 
-**Story**
+**I want to** search projects
 
-> As a user who forgot my password, I want to reset it securely so that I can regain access.
+**So that** I can quickly locate a workspace.
 
 ### Acceptance Criteria
 
-* User can request password reset.
-* Reset email is sent.
-* Reset token expires.
-* Password can be updated using valid token.
+- Search by project name.
+- Search by description.
+- Case-insensitive search.
 
 ---
 
-## US-09: View Profile
+## US-009 — Filter Projects
 
-**Priority:** High
+**As a** user
 
-**Story**
+**I want to** filter projects
 
-> As an authenticated user, I want to view my profile information so that I can verify my account details.
+**So that** I can narrow my results.
 
 ### Acceptance Criteria
 
-* Profile endpoint returns authenticated user's information.
-* Unauthorized users cannot access the endpoint.
+Support filtering by:
+
+- Status
+- Created Date
+- Updated Date
 
 ---
 
-## US-10: Update Profile
+## US-010 — Sort Projects
 
-**Priority:** High
+**As a** user
 
-**Story**
+**I want to** sort projects
 
-> As an authenticated user, I want to update my profile so that my account information remains accurate.
+**So that** I can organize my workspace.
 
 ### Acceptance Criteria
 
-* User can update editable fields.
-* Immutable fields cannot be modified.
-* Validation errors are returned appropriately.
+Support ordering by:
+
+- Name
+- Created Date
+- Updated Date
+
+Ascending and descending ordering supported.
 
 ---
 
-## US-11: View Active Sessions
+# Feature F-04 — Project Details
 
-**Priority:** Medium
+---
 
-**Story**
+## US-011 — View Project Details
 
-> As a user, I want to see my active sessions so that I know where my account is logged in.
+**As a** project owner
+
+**I want to** view complete project information
+
+**So that** I understand the current state of the project.
 
 ### Acceptance Criteria
 
-* Active sessions are listed.
-* Session metadata is displayed.
-* Current session is identified.
+Display:
+
+- Name
+- Description
+- Status
+- Owner
+- Created Date
+- Updated Date
 
 ---
 
-## US-12: Revoke Session
+## US-012 — View Project Summary
 
-**Priority:** Medium
+**As a** user
 
-**Story**
+**I want to** see a project summary
 
-> As a user, I want to revoke another active session so that I can remove unauthorized access.
+**So that** I can understand project activity.
 
 ### Acceptance Criteria
 
-* User can revoke selected session.
-* Revoked session immediately loses access.
+Return placeholders or actual values for:
+
+- Dataset Count
+- Generation Jobs
+- Generated Files
+- Export History
 
 ---
 
-## US-13: Role-Based Authorization
+# Feature F-05 — Dashboard Statistics
 
-**Priority:** High
+---
 
-**Story**
+## US-013 — View Dashboard Statistics
 
-> As a system administrator, I want resources protected by roles so that unauthorized users cannot access restricted functionality.
+**As a** user
+
+**I want** project statistics
+
+**So that** I understand overall workspace activity.
 
 ### Acceptance Criteria
 
-* User role is verified.
-* Unauthorized access returns 403.
-* Authorized users receive requested resource.
+Dashboard includes:
+
+- Total Projects
+- Active Projects
+- Archived Projects
+- Total Datasets (Future)
+- Generated Records (Future)
 
 ---
 
-## US-14: Audit Logging
+# Feature F-06 — Ownership & Authorization
 
-**Priority:** Medium
+---
 
-**Story**
+## US-014 — Prevent Unauthorized Access
 
-> As a system administrator, I want authentication events recorded so that security-related actions can be audited.
+**As a** user
+
+**I should not** access projects owned by others
+
+**So that** project data remains private.
 
 ### Acceptance Criteria
 
-Events recorded include:
-
-* Registration
-* Login
-* Logout
-* Password reset
-* Password change
-* Failed login
-* Profile update
+- Unauthorized requests rejected.
+- HTTP 403 returned.
+- Audit event generated.
 
 ---
 
-## US-15: Rate Limiting
+## US-015 — Restrict Project Modification
 
-**Priority:** High
+**As a** non-owner
 
-**Story**
-
-> As a platform owner, I want authentication endpoints protected by rate limiting so that brute-force attacks are mitigated.
+**I should not** modify another user's project.
 
 ### Acceptance Criteria
 
-* Login endpoint is rate limited.
-* Registration endpoint is rate limited.
-* Password reset endpoint is rate limited.
-* Excessive requests return HTTP 429.
+- Update rejected.
+- Delete rejected.
+- Archive rejected.
+- Restore rejected.
 
 ---
 
-## US-16: Account Status
+# Feature F-07 — Project Lifecycle
 
-**Priority:** Medium
+---
 
-**Story**
+## US-016 — Follow Project Lifecycle
 
-> As an administrator, I want to control account status so that inactive or suspended users cannot access the platform.
+**As a** system
+
+**I must** enforce valid lifecycle transitions
+
+**So that** projects remain in a consistent state.
 
 ### Acceptance Criteria
 
-Supported statuses:
+Allowed transitions:
 
-* Active
-* Inactive
-* Suspended
-* Soft Deleted
+- Active → Archived
+- Archived → Active
+- Active → Deleted
 
-Only active users may authenticate.
+Invalid transitions rejected.
 
 ---
 
-# 5. Story Dependencies
+# Feature F-08 — Validation
 
-| Story | Depends On        |
-| ----- | ----------------- |
-| US-01 | Custom User Model |
-| US-02 | US-01             |
-| US-03 | US-01             |
-| US-04 | US-03             |
-| US-05 | US-03, JWT        |
-| US-06 | JWT               |
-| US-07 | US-03             |
-| US-08 | US-01             |
-| US-09 | US-03             |
-| US-10 | US-09             |
-| US-11 | US-03             |
-| US-12 | US-11             |
-| US-13 | Authentication    |
-| US-14 | Authentication    |
-| US-15 | Authentication    |
-| US-16 | User Management   |
+---
+
+## US-017 — Validate Project Input
+
+**As a** system
+
+**I must** validate incoming project data
+
+**So that** invalid data never reaches the database.
+
+### Acceptance Criteria
+
+Validate:
+
+- Required fields
+- Maximum length
+- Duplicate names
+- Ownership
+- Status
+
+---
+
+# Feature F-09 — Audit
+
+---
+
+## US-018 — Record Project Activity
+
+**As a** system
+
+**I must** record project operations
+
+**So that** future auditing and debugging are possible.
+
+### Acceptance Criteria
+
+Events logged:
+
+- Create
+- Update
+- Archive
+- Restore
+- Delete
+
+---
+
+# 4. Non-Functional User Stories
+
+---
+
+## NFR-US-001
+
+**As a** user
+
+I expect project operations to complete within acceptable response times under normal workloads.
+
+---
+
+## NFR-US-002
+
+**As a** user
+
+I expect my project data to remain secure from unauthorized access.
+
+---
+
+## NFR-US-003
+
+**As a** developer
+
+I expect the Project module to follow the platform architecture and coding standards.
+
+---
+
+## NFR-US-004
+
+**As a** system administrator
+
+I expect all project operations to be auditable.
+
+---
+
+# 5. Story Dependency Flow
+
+```text
+US-001
+   │
+   ▼
+US-002
+   │
+   ▼
+US-003
+   │
+   ▼
+US-004
+   │
+   ▼
+US-005
+   │
+   ▼
+US-006
+   │
+   ▼
+US-007
+   │
+   ├────────► US-008
+   │
+   ├────────► US-009
+   │
+   └────────► US-010
+                │
+                ▼
+            US-011
+                │
+                ▼
+            US-012
+                │
+                ▼
+            US-013
+                │
+                ▼
+        US-014 & US-015
+                │
+                ▼
+            US-016
+                │
+                ▼
+            US-017
+                │
+                ▼
+            US-018
+```
 
 ---
 
 # 6. Definition of Done
 
-A user story is complete when:
+A user story is complete only when:
 
-* Business requirements are implemented.
-* Acceptance criteria are satisfied.
-* Backend implementation is complete.
-* Frontend implementation is complete (if applicable).
-* API documentation is updated.
-* Unit tests pass.
-* Integration tests pass.
-* Code review is approved.
-* No critical defects remain.
-
----
-
-# 7. Story Implementation Order
-
-1. Custom User Model
-2. User Registration
-3. Email Verification
-4. Login
-5. JWT Authentication
-6. Protected APIs
-7. Profile Management
-8. Password Management
-9. Session Management
-10. RBAC
-11. Audit Logging
-12. Rate Limiting
-
----
-
-# 8. Related Documents
-
-* 00_EPIC_OVERVIEW.md
-* 01_FEATURE_BREAKDOWN.md
-* 03_DATABASE_DESIGN.md
-* 04_BACKEND_IMPLEMENTATION.md
-* 06_API_IMPLEMENTATION.md
-* 08_TESTING_PLAN.md
+- Business requirement implemented
+- Acceptance criteria satisfied
+- Validation completed
+- Security checks enforced
+- Unit tests passed
+- Integration tests passed
+- API documented
+- Code reviewed
+- Product Owner approved
 
 ---
 
 # Version History
 
-| Version | Description                                               |
-| ------- | --------------------------------------------------------- |
-| 1.0.0   | Initial user stories and acceptance criteria for EPIC-01. |
+| Version | Description |
+|----------|-------------|
+| 1.0.0 | Initial User Stories for EPIC-02 |

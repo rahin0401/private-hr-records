@@ -1,63 +1,97 @@
-# 06_API_IMPLEMENTATION.md
+# EPIC-02 — Project Workspace Management
 
-**Project:** Privacy-Preserving Synthetic HR Records Generator
-**Epic:** EPIC-01 – Authentication & User Management
-**Document:** API Implementation Guide
-**Version:** 1.0.0
-**Status:** Draft
+## 06_API_IMPLEMENTATION.md
+
+---
+
+# Document Information
+
+| Property | Value |
+|----------|-------|
+| Project | Privacy-Preserving Synthetic HR Records Generator |
+| Epic | EPIC-02 |
+| Document | API Implementation Guide |
+| Version | 1.0.0 |
+| Status | Draft |
+| Depends On | 03_DATABASE_DESIGN.md, 04_BACKEND_IMPLEMENTATION.md |
 
 ---
 
 # 1. Purpose
 
-This document defines the REST API implementation for the Authentication & User Management module.
+This document defines the REST API implementation for **EPIC-02 – Project Workspace Management**.
 
-It specifies endpoints, request/response formats, permissions, validation, authentication flow, and implementation guidelines.
+The objective is to establish a consistent, secure, RESTful API for project operations while maintaining compatibility with future platform modules.
+
+All endpoints shall follow the platform-wide API specification.
 
 ---
 
-# 2. Base URL
+# 2. API Design Principles
 
-```text id="u2n4fd"
-/api/v1/
+The Project API shall:
+
+- Follow REST principles
+- Be stateless
+- Use JWT Authentication
+- Return standardized responses
+- Support pagination
+- Support filtering
+- Support searching
+- Support ordering
+- Be versioned
+- Be backward compatible
+
+---
+
+# 3. Base URL
+
+```
+/api/v1/projects/
 ```
 
-Authentication Header
+Future versions
 
-```text id="7rkgf8"
-Authorization: Bearer <access_token>
+```
+/api/v2/projects/
 ```
 
 ---
 
-# 3. API Standards
+# 4. Authentication
 
-* RESTful design
-* JSON request/response
-* JWT Authentication
-* Consistent response format
-* Proper HTTP status codes
-* Input validation
-* Pagination where required
-* Versioned endpoints
+Every endpoint requires authentication.
+
+```
+Authorization:
+
+Bearer <access_token>
+```
+
+Unauthenticated requests return
+
+```
+401 Unauthorized
+```
 
 ---
 
-# 4. Standard Response Format
+# 5. Standard Success Response
 
-### Success
-
-```json id="v5xyi2"
+```json
 {
     "success": true,
-    "message": "Request completed successfully.",
-    "data": {}
+    "message": "Operation completed successfully.",
+    "data": {},
+    "meta": {}
 }
 ```
 
-### Error
+---
 
-```json id="0ql96m"
+# 6. Standard Error Response
+
+```json
 {
     "success": false,
     "message": "Validation failed.",
@@ -68,454 +102,574 @@ Authorization: Bearer <access_token>
 
 ---
 
-# 5. Authentication Endpoints
+# 7. API Endpoints
 
 ---
 
-## Register
+## Create Project
+
+### Endpoint
 
 ```
-POST /auth/register/
+POST /projects/
 ```
+
+### Purpose
+
+Create a new project.
+
+---
 
 ### Request
 
-* username
-* email
-* password
-* confirm_password
-
-### Response
-
-* User created
-* Verification email sent
-
-### Status Codes
-
-* 201 Created
-* 400 Bad Request
-* 409 Conflict
+```json
+{
+    "name": "HR Dataset Research",
+    "description": "Synthetic HR generation project."
+}
+```
 
 ---
 
-## Login
+### Success
 
 ```
-POST /auth/login/
+201 Created
 ```
-
-### Request
-
-* email/username
-* password
-
-### Response
-
-* access_token
-* refresh_token
-* user
-
-### Status Codes
-
-* 200 OK
-* 401 Unauthorized
 
 ---
 
-## Logout
+### Validation
 
-```
-POST /auth/logout/
-```
-
-### Authentication
-
-Required
-
-### Response
-
-* Logout successful
-
-### Status Codes
-
-* 200 OK
-* 401 Unauthorized
+- Name required
+- Name unique per owner
+- Description optional
 
 ---
 
-## Refresh Token
+## List Projects
+
+### Endpoint
 
 ```
-POST /auth/token/refresh/
+GET /projects/
 ```
 
-### Request
+### Purpose
 
-* refresh_token
-
-### Response
-
-* new_access_token
-* new_refresh_token (if rotation enabled)
+Return authenticated user's projects.
 
 ---
 
-## Verify Email
+### Query Parameters
 
 ```
-GET /auth/verify-email/<token>/
+?page=1
+
+&page_size=10
+
+?search=research
+
+?status=ACTIVE
+
+?ordering=-created_at
 ```
-
-### Response
-
-* Account activated
 
 ---
 
-## Forgot Password
+### Success
 
 ```
-POST /auth/password-reset/
+200 OK
 ```
-
-### Request
-
-* email
-
-### Response
-
-* Reset email sent
 
 ---
 
-## Reset Password
+## Get Project Details
+
+### Endpoint
 
 ```
-POST /auth/password-reset-confirm/
+GET /projects/{project_id}/
 ```
-
-### Request
-
-* uid
-* token
-* password
-* confirm_password
-
-### Response
-
-* Password updated
 
 ---
 
-## Change Password
+### Success
 
 ```
-POST /auth/change-password/
+200 OK
 ```
-
-Authentication Required
-
-### Request
-
-* current_password
-* new_password
-* confirm_password
-
-### Response
-
-* Password changed
 
 ---
 
-# 6. User Endpoints
+### Errors
+
+```
+404 Not Found
+
+403 Forbidden
+```
 
 ---
 
-## Profile
+## Update Project
+
+### Endpoint
 
 ```
-GET /users/profile/
+PATCH /projects/{project_id}/
 ```
-
-Returns authenticated user information.
 
 ---
 
-## Update Profile
+### Editable Fields
 
+```json
+{
+    "name": "Updated Name",
+    "description": "Updated Description"
+}
 ```
-PATCH /users/profile/
-```
-
-Editable Fields
-
-* first_name
-* last_name
-
-Future:
-
-* avatar
-* preferences
 
 ---
 
-## Active Sessions
+### Success
 
 ```
-GET /users/sessions/
+200 OK
 ```
-
-Returns all active sessions.
 
 ---
 
-## Revoke Session
+## Archive Project
+
+### Endpoint
 
 ```
-DELETE /users/sessions/<id>/
+POST /projects/{project_id}/archive/
 ```
 
-Revokes selected session.
-
 ---
 
-## Logout All Sessions
+### Success
 
 ```
-POST /users/logout-all/
+200 OK
 ```
 
-Terminates all active sessions.
+---
+
+### Errors
+
+```
+400 Already Archived
+```
 
 ---
 
-# 7. Permissions
+## Restore Project
 
-| Endpoint         | Authentication |
-| ---------------- | -------------- |
-| Register         | Public         |
-| Login            | Public         |
-| Verify Email     | Public         |
-| Password Reset   | Public         |
-| Password Confirm | Public         |
-| Profile          | Authenticated  |
-| Update Profile   | Authenticated  |
-| Change Password  | Authenticated  |
-| Sessions         | Authenticated  |
+### Endpoint
+
+```
+POST /projects/{project_id}/restore/
+```
 
 ---
 
-# 8. Validation Rules
+### Success
 
-Registration
-
-* Username unique
-* Email unique
-* Password strength
-* Password confirmation
-
-Login
-
-* Required fields
-* Valid credentials
-
-Profile
-
-* Editable fields only
-
-Password
-
-* Strong password
-* Confirm password
+```
+200 OK
+```
 
 ---
 
-# 9. Error Codes
+## Delete Project
 
-| Code                | Description                    |
-| ------------------- | ------------------------------ |
-| VALIDATION_ERROR    | Invalid request                |
-| INVALID_CREDENTIALS | Login failed                   |
-| ACCOUNT_INACTIVE    | Email not verified or inactive |
-| ACCOUNT_SUSPENDED   | Account suspended              |
-| EMAIL_EXISTS        | Email already registered       |
-| USERNAME_EXISTS     | Username already taken         |
-| TOKEN_INVALID       | Invalid token                  |
-| TOKEN_EXPIRED       | Expired token                  |
-| PERMISSION_DENIED   | Unauthorized access            |
-| SESSION_EXPIRED     | Authentication expired         |
+Soft Delete
+
+### Endpoint
+
+```
+DELETE /projects/{project_id}/
+```
 
 ---
 
-# 10. Authentication Flow
+### Success
 
-```text id="cwxdc9"
-Register
+```
+204 No Content
+```
+
+---
+
+### Behaviour
+
+Project is soft deleted.
+
+No physical deletion occurs.
+
+---
+
+## Dashboard Statistics
+
+### Endpoint
+
+```
+GET /projects/dashboard/
+```
+
+---
+
+### Success
+
+```json
+{
+    "success": true,
+    "data": {
+        "total_projects": 12,
+        "active_projects": 10,
+        "archived_projects": 2,
+        "datasets": 0,
+        "generation_jobs": 0
+    }
+}
+```
+
+Future modules populate remaining values.
+
+---
+
+# 8. Request Validation
+
+Incoming requests shall validate
+
+- Authentication
+- Required fields
+- Maximum length
+- Duplicate names
+- Valid status
+- Ownership
+
+---
+
+# 9. Search
+
+Supported Fields
+
+```
+name
+
+description
+```
+
+Example
+
+```
+GET /projects/?search=bank
+```
+
+---
+
+# 10. Filtering
+
+Supported
+
+```
+status
+
+created_after
+
+created_before
+```
+
+Example
+
+```
+GET /projects/?status=ACTIVE
+```
+
+---
+
+# 11. Ordering
+
+Supported
+
+```
+created_at
+
+updated_at
+
+name
+```
+
+Example
+
+```
+GET /projects/?ordering=-updated_at
+```
+
+---
+
+# 12. Pagination
+
+Example
+
+```
+GET /projects/?page=1&page_size=20
+```
+
+Default page size
+
+```
+20
+```
+
+Maximum page size
+
+```
+100
+```
+
+---
+
+# 13. Status Codes
+
+| Status | Meaning |
+|---------|----------|
+|200|Success|
+|201|Created|
+|204|Deleted|
+|400|Bad Request|
+|401|Unauthorized|
+|403|Forbidden|
+|404|Not Found|
+|409|Conflict|
+|422|Validation Error|
+|500|Internal Server Error|
+
+---
+
+# 14. Error Codes
+
+```
+PROJECT_NOT_FOUND
+
+PROJECT_ALREADY_EXISTS
+
+PROJECT_ARCHIVED
+
+PROJECT_DELETED
+
+INVALID_PROJECT_STATUS
+
+UNAUTHORIZED_PROJECT_ACCESS
+
+VALIDATION_ERROR
+```
+
+---
+
+# 15. Permissions
+
+| Endpoint | Authentication | Owner Required |
+|------------|---------------|---------------|
+|Create|Yes|No|
+|List|Yes|Yes|
+|Detail|Yes|Yes|
+|Update|Yes|Yes|
+|Archive|Yes|Yes|
+|Restore|Yes|Yes|
+|Delete|Yes|Yes|
+|Dashboard|Yes|Yes|
+
+---
+
+# 16. Rate Limiting
+
+Future implementation.
+
+Recommended
+
+```
+100 Requests / Minute
+```
+
+Create Project
+
+```
+20 Requests / Minute
+```
+
+---
+
+# 17. Logging
+
+Log
+
+- Project Created
+- Updated
+- Deleted
+- Archived
+- Restored
+- Unauthorized Access
+- Validation Errors
+
+Never log
+
+- JWT Tokens
+- Passwords
+- Sensitive Data
+
+---
+
+# 18. Security
+
+API shall enforce
+
+- JWT Authentication
+- Object-level Authorization
+- Ownership Validation
+- Input Validation
+- Secure Headers
+- HTTPS (Production)
+
+---
+
+# 19. Future Compatibility
+
+API designed to support
+
+```
+Organizations
 
 ↓
 
-Verify Email
+Shared Projects
 
 ↓
 
-Login
+Teams
 
 ↓
 
-Receive JWT
+Project Templates
 
 ↓
 
-Access Protected APIs
+Tags
 
 ↓
 
-Refresh Token
-
-↓
-
-Logout
+Versioning
 ```
 
----
-
-# 11. Rate Limiting
-
-Apply limits to:
-
-* Register
-* Login
-* Password Reset
-* Verify Email
-
-Return
-
-```
-429 Too Many Requests
-```
-
-when limits are exceeded.
+No breaking changes should be required.
 
 ---
 
-# 12. Security Requirements
+# 20. Testing Checklist
 
-Every endpoint shall:
+API tests shall verify
 
-* Validate input
-* Authenticate user (where required)
-* Authorize access
-* Log security events
-* Return consistent errors
-
-Never expose:
-
-* Passwords
-* Refresh tokens in logs
-* Internal exceptions
-
----
-
-# 13. Versioning
-
-Current Version
-
-```
-/api/v1/
-```
-
-Breaking API changes require a new version.
+- Create
+- Retrieve
+- Update
+- Delete
+- Archive
+- Restore
+- Pagination
+- Search
+- Filtering
+- Ordering
+- Authentication
+- Authorization
+- Validation
 
 ---
 
-# 14. API Implementation Mapping
+# 21. Implementation Order
 
-| Endpoint         | View                        | Serializer                     | Service               |
-| ---------------- | --------------------------- | ------------------------------ | --------------------- |
-| Register         | RegisterAPIView             | RegistrationSerializer         | AuthenticationService |
-| Login            | LoginAPIView                | LoginSerializer                | AuthenticationService |
-| Logout           | LogoutAPIView               | LogoutSerializer               | AuthenticationService |
-| Refresh          | RefreshAPIView              | RefreshSerializer              | AuthenticationService |
-| Verify Email     | VerifyEmailAPIView          | VerifySerializer               | AuthenticationService |
-| Password Reset   | PasswordResetAPIView        | PasswordResetSerializer        | UserService           |
-| Password Confirm | PasswordResetConfirmAPIView | PasswordResetConfirmSerializer | UserService           |
-| Change Password  | ChangePasswordAPIView       | ChangePasswordSerializer       | UserService           |
-| Profile          | ProfileAPIView              | ProfileSerializer              | UserService           |
-| Sessions         | SessionAPIView              | SessionSerializer              | SessionService        |
+Phase 1
 
----
+- URLs
 
-# 15. Testing Checklist
+Phase 2
 
-Verify:
+- Serializers
 
-* Registration
-* Duplicate registration
-* Login
-* Invalid login
-* Token refresh
-* Logout
-* Password reset
-* Email verification
-* Protected endpoints
-* Session APIs
-* Profile APIs
+Phase 3
 
----
+- Services
 
-# 16. Implementation Order
+Phase 4
 
-1. Register
-2. Login
-3. JWT Authentication
-4. Logout
-5. Profile
-6. Password Management
-7. Email Verification
-8. Session Management
-9. Rate Limiting
-10. Testing
+- Views
+
+Phase 5
+
+- Permissions
+
+Phase 6
+
+- Search
+
+Phase 7
+
+- Filters
+
+Phase 8
+
+- Testing
 
 ---
 
-# 17. Deliverables
+# 22. Deliverables
 
-* Authentication APIs
-* User APIs
-* Session APIs
-* JWT Authentication
-* Password Management APIs
-* Email Verification API
-* API Documentation
+Completed API shall provide
 
----
-
-# 18. Definition of Done
-
-The API implementation is complete when:
-
-* All endpoints implemented
-* Validation complete
-* Authentication enforced
-* Authorization enforced
-* Tests passing
-* OpenAPI documentation generated
-* No critical security issues remain
+- RESTful endpoints
+- Standard responses
+- Secure authentication
+- Authorization
+- CRUD operations
+- Dashboard endpoint
+- Pagination
+- Search
+- Filtering
+- Ordering
 
 ---
 
-# 19. Related Documents
+# 23. Definition of Done
 
-* 03_DATABASE_DESIGN.md
-* 04_BACKEND_IMPLEMENTATION.md
-* 05_FRONTEND_IMPLEMENTATION.md
-* 07_SECURITY_IMPLEMENTATION.md
-* 08_TESTING_PLAN.md
+API implementation is complete when
+
+- All endpoints functional
+- Security implemented
+- Validation completed
+- Tests passing
+- Documentation updated
+- Swagger generated
+- Code review approved
+
+---
+
+# 24. Related Documents
+
+- 03_DATABASE_DESIGN.md
+- 04_BACKEND_IMPLEMENTATION.md
+- 05_FRONTEND_IMPLEMENTATION.md
+- 07_SECURITY_IMPLEMENTATION.md
+- 08_TESTING_PLAN.md
 
 ---
 
 # Version History
 
-| Version | Description                                   |
-| ------- | --------------------------------------------- |
-| 1.0.0   | Initial API implementation guide for EPIC-01. |
+| Version | Description |
+|----------|-------------|
+| 1.0.0 | Initial API implementation guide for EPIC-02 |

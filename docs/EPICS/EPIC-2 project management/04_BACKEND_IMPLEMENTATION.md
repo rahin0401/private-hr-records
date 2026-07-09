@@ -1,40 +1,67 @@
-# 04_BACKEND_IMPLEMENTATION.md
+# EPIC-02 — Project Workspace Management
 
-**Project:** Privacy-Preserving Synthetic HR Records Generator
-**Epic:** EPIC-01 – Authentication & User Management
-**Document:** Backend Implementation Guide
-**Version:** 1.0.0
-**Status:** Draft
+## 04_BACKEND_IMPLEMENTATION.md
+
+---
+
+# Document Information
+
+| Property | Value |
+|----------|-------|
+| Project | Privacy-Preserving Synthetic HR Records Generator |
+| Epic | EPIC-02 |
+| Document | Backend Implementation Guide |
+| Version | 1.0.0 |
+| Status | Draft |
+| Depends On | 03_DATABASE_DESIGN.md |
 
 ---
 
 # 1. Purpose
 
-This document describes the backend implementation for EPIC-01.
+This document defines the backend implementation strategy for **EPIC-02 – Project Workspace Management**.
 
-It defines the Django application structure, models, serializers, services, API views, permissions, utilities, and implementation sequence.
+It specifies the Django application structure, models, serializers, services, permissions, API views, validators, exceptions, and implementation order.
+
+The objective is to ensure that all business logic remains modular, testable, secure, and production-ready.
 
 ---
 
 # 2. Technology Stack
 
-* Python 3.12+
-* Django
-* Django REST Framework
-* PostgreSQL
-* Simple JWT
-* Celery (Future)
-* Redis (Future)
+Backend Framework
+
+- Django
+
+API Framework
+
+- Django REST Framework
+
+Database
+
+- PostgreSQL
+
+Authentication
+
+- JWT Authentication
+
+Background Tasks (Future)
+
+- Celery
+
+Message Broker (Future)
+
+- Redis
 
 ---
 
-# 3. Django App Structure
+# 3. Django Application
 
-```text
+```
 apps/
 
-authentication/
-│
+projects/
+
 ├── migrations/
 ├── admin.py
 ├── apps.py
@@ -47,501 +74,588 @@ authentication/
 ├── urls.py
 ├── views.py
 ├── signals.py
-├── tasks.py
-├── tokens.py
-├── utils.py
 ├── managers.py
+├── filters.py
+├── utils.py
 └── tests/
 ```
 
 ---
 
-# 4. Models
+# 4. Responsibilities
 
-## User
+The Project application is responsible for:
 
-Responsible for:
+- Project lifecycle
+- Ownership
+- Dashboard statistics
+- Project metadata
+- Project authorization
+- Search
+- Filtering
+- Ordering
 
-* Authentication
-* Identity
-* Roles
-* Status
-* Permissions
+The Project application shall not manage:
 
-Base Class
-
-* AbstractBaseUser
-* PermissionsMixin
-
----
-
-## UserSession
-
-Responsible for:
-
-* Device tracking
-* Active sessions
-* Logout all devices
+- Datasets
+- Schemas
+- AI Models
+- Differential Privacy
+- Exports
 
 ---
 
-## AuditLog
+# 5. Models
 
-Responsible for:
+## Project
 
-* Authentication events
-* Security events
-* User actions
+Responsibilities
 
----
-
-# 5. Custom User Manager
-
-Implement:
-
-* create_user()
-* create_superuser()
-
-Responsibilities:
-
-* Normalize email
-* Hash password
-* Validate required fields
+- Store project information
+- Maintain ownership
+- Maintain lifecycle
+- Support future relationships
 
 ---
 
-# 6. Serializers
+# 6. Managers
 
 Create:
 
-## RegistrationSerializer
+## ProjectManager
 
-Responsibilities:
+Responsibilities
 
-* Validate input
-* Create user
-* Hash password
-
----
-
-## LoginSerializer
-
-Responsibilities:
-
-* Validate credentials
+- Active projects
+- Archived projects
+- Deleted projects
+- Owner filtering
 
 ---
 
-## ProfileSerializer
+# 7. Serializers
 
-Responsibilities:
-
-* Read profile
-* Update editable fields
+Create:
 
 ---
 
-## PasswordChangeSerializer
+## ProjectCreateSerializer
 
-Responsibilities:
+Responsibilities
 
-* Validate current password
-* Validate new password
-
----
-
-## PasswordResetSerializer
-
-Responsibilities:
-
-* Email validation
+- Validate input
+- Create project
+- Generate slug
+- Return response
 
 ---
 
-## PasswordResetConfirmSerializer
+## ProjectUpdateSerializer
 
-Responsibilities:
+Responsibilities
 
-* Validate token
-* Reset password
+- Update editable fields
+- Validate updates
 
 ---
 
-# 7. Service Layer
+## ProjectDetailSerializer
+
+Responsibilities
+
+Return complete project information.
+
+---
+
+## ProjectListSerializer
+
+Responsibilities
+
+Optimized serializer for project listing.
+
+---
+
+## DashboardSerializer
+
+Responsibilities
+
+Return dashboard statistics.
+
+---
+
+# 8. Service Layer
 
 Business logic belongs here.
 
 Create:
 
-## AuthenticationService
+---
+
+## ProjectService
 
 Responsibilities
 
-* Register
-* Login
-* Logout
-* Refresh token
-* Email verification
+- Create project
+- Update project
+- Archive project
+- Restore project
+- Delete project
+- Retrieve project
+- List projects
 
 ---
 
-## UserService
+## DashboardService
 
 Responsibilities
 
-* Profile
-* Password change
-* Password reset
-* User updates
+- Dashboard statistics
+- Future integrations
+- Summary generation
 
 ---
 
-## SessionService
+## OwnershipService
 
 Responsibilities
 
-* Active sessions
-* Revoke session
-* Logout all
+- Validate ownership
+- Permission checks
 
 ---
 
-## AuditService
+# 9. API Views
 
-Responsibilities
-
-* Log events
-* Security history
-
----
-
-# 8. API Views
-
-Views should remain thin.
+Views remain thin.
 
 Create:
 
-* RegisterAPIView
-* LoginAPIView
-* LogoutAPIView
-* RefreshAPIView
-* VerifyEmailAPIView
-* PasswordResetAPIView
-* PasswordResetConfirmAPIView
-* ChangePasswordAPIView
-* ProfileAPIView
-* SessionAPIView
+```
+ProjectListCreateAPIView
 
-Views should:
+ProjectDetailAPIView
 
-* Validate request
-* Call services
-* Return standardized responses
+ProjectUpdateAPIView
 
-No business logic should exist in views.
+ProjectDeleteAPIView
+
+ProjectArchiveAPIView
+
+ProjectRestoreAPIView
+
+DashboardAPIView
+```
+
+Views shall:
+
+- Validate request
+- Call services
+- Return standardized responses
+
+Views shall never contain business logic.
 
 ---
 
-# 9. Permissions
+# 10. Permissions
 
-Create permission classes.
+Create custom permissions.
 
 Examples
 
-* IsAuthenticated
-* IsAdmin
-* IsOwner
+```
+IsProjectOwner
 
-Use custom permissions where required.
+CanArchiveProject
+
+CanRestoreProject
+
+CanDeleteProject
+```
+
+All permissions must inherit from DRF BasePermission.
 
 ---
 
-# 10. Validators
+# 11. Validators
 
-Create reusable validators.
+Reusable validators.
 
 Examples
 
-* PasswordValidator
-* UsernameValidator
-* EmailValidator
+```
+ProjectNameValidator
+
+ProjectStatusValidator
+
+ProjectSlugValidator
+```
+
+Validators should never perform business workflows.
 
 ---
 
-# 11. Exception Handling
+# 12. Exceptions
 
 Create custom exceptions.
 
 Examples
 
-* InvalidCredentialsException
-* EmailAlreadyExistsException
-* UsernameAlreadyExistsException
-* AccountInactiveException
-* InvalidTokenException
+```
+ProjectNotFoundException
 
-Return consistent API responses.
+DuplicateProjectException
+
+ProjectAlreadyArchivedException
+
+ProjectAlreadyDeletedException
+
+UnauthorizedProjectAccessException
+
+InvalidProjectStateException
+```
+
+Business exceptions remain separate from framework exceptions.
 
 ---
 
-# 12. Authentication Flow
+# 13. Filters
 
-```text
-Register
-    │
-    ▼
-Create User
-    │
-    ▼
-Send Verification Email
-    │
-    ▼
-Verify Email
-    │
-    ▼
-Activate Account
-    │
-    ▼
-Login
-    │
-    ▼
-Generate JWT Tokens
-    │
-    ▼
-Access Protected APIs
+Support
+
+- Search
+- Ordering
+- Status
+- Date range
+
+Use django-filter.
+
+---
+
+# 14. URLs
+
+```
+/projects/
+
+/projects/<uuid:id>/
+
+/projects/<uuid:id>/archive/
+
+/projects/<uuid:id>/restore/
+
+/projects/dashboard/
+```
+
+Versioning handled at API root.
+
+---
+
+# 15. Request Flow
+
+```
+Request
+
+↓
+
+APIView
+
+↓
+
+Serializer Validation
+
+↓
+
+Permission Check
+
+↓
+
+Project Service
+
+↓
+
+Database
+
+↓
+
+Serializer
+
+↓
+
+Response
 ```
 
 ---
 
-# 13. Password Reset Flow
+# 16. Business Rules
 
-```text
-Forgot Password
-        │
-        ▼
-Generate Reset Token
-        │
-        ▼
-Email User
-        │
-        ▼
-Validate Token
-        │
-        ▼
-Reset Password
-```
+The backend shall enforce:
+
+- Authentication required
+- Ownership validation
+- Soft deletion
+- Unique names per owner
+- Valid lifecycle transitions
 
 ---
 
-# 14. Session Management Flow
+# 17. Signals
 
-```text
-Login
+Signals only for side effects.
 
-↓
+Examples
 
-Create Session
+- Audit log
+- Cache invalidation (future)
+- Notifications (future)
 
-↓
-
-Track Device
-
-↓
-
-Refresh Token
-
-↓
-
-Logout
-
-↓
-
-Delete / Expire Session
-```
-
----
-
-# 15. Signals
-
-Use signals for non-business side effects only.
-
-Examples:
-
-* Create audit log
-* Update last_login
-* Send notification
-
-Avoid placing core business logic in signals.
-
----
-
-# 16. Utilities
-
-Create reusable helpers.
-
-Examples:
-
-* JWT utilities
-* Email utilities
-* Response builders
-* Token generators
-
----
-
-# 17. Middleware
-
-Implement middleware where appropriate.
-
-Examples:
-
-* Request ID
-* Audit context
-* Security headers (project-wide)
-
-Authentication should primarily rely on DRF authentication classes.
+Business logic shall never exist inside signals.
 
 ---
 
 # 18. Logging
 
-Log:
+Log
 
-* Registration
-* Login
-* Failed login
-* Logout
-* Password changes
-* Security events
+- Project Created
+- Project Updated
+- Project Archived
+- Project Restored
+- Project Deleted
+- Unauthorized Access
+- Validation Failures
 
-Do not log:
-
-* Passwords
-* Tokens
-* Secrets
+Never log confidential information.
 
 ---
 
-# 19. Testing Requirements
+# 19. Transactions
 
-Backend tests must cover:
+Database transactions required for:
 
-* User model
-* Manager
-* Serializers
-* Services
-* Views
-* Permissions
-* Authentication
-* Password reset
-* Email verification
+- Create
+- Update
+- Archive
+- Restore
+- Delete
 
-Target high coverage for authentication-critical code.
+Use:
+
+```
+transaction.atomic()
+```
+
+where multiple database operations occur.
 
 ---
 
-# 20. Implementation Order
+# 20. Error Handling
+
+Errors must be
+
+- Structured
+- Consistent
+- Logged
+- Traceable
+
+API response example
+
+```json
+{
+    "success": false,
+    "message": "Project already exists.",
+    "error_code": "PROJECT_EXISTS"
+}
+```
+
+---
+
+# 21. Security
+
+The backend shall implement
+
+- JWT Authentication
+- Object-level permissions
+- Ownership validation
+- Input validation
+- Secure responses
+- Rate limiting (Future)
+
+---
+
+# 22. Performance
+
+Implementation should support
+
+- Pagination
+- Optimized ORM queries
+- Database indexes
+- Lazy loading where appropriate
+- Future caching
+
+Avoid N+1 query problems.
+
+---
+
+# 23. Testing Requirements
+
+Backend tests shall cover
+
+Models
+
+- Project model
+
+Managers
+
+- Active manager
+- Deleted manager
+
+Serializers
+
+- Create
+- Update
+- Validation
+
+Services
+
+- CRUD
+- Dashboard
+- Authorization
+
+Views
+
+- All endpoints
+
+Permissions
+
+- Owner
+- Non-owner
+
+Validation
+
+- Duplicate names
+- Status
+- Ownership
+
+Integration
+
+- Complete project lifecycle
+
+---
+
+# 24. Implementation Order
 
 ### Phase 1
 
-* Create authentication app
-* Create custom User model
-* Configure settings
-* Run migrations
+- Create Django app
+- Register app
+- Create Project model
 
 ---
 
 ### Phase 2
 
-* User manager
-* Serializers
-* Validators
+- Managers
+- Validators
+- Exceptions
 
 ---
 
 ### Phase 3
 
-* Authentication services
-* User services
-* Session services
+- Serializers
 
 ---
 
 ### Phase 4
 
-* API views
-* URLs
-* Permissions
+- Services
 
 ---
 
 ### Phase 5
 
-* Email verification
-* Password reset
-* JWT configuration
+- Permissions
 
 ---
 
 ### Phase 6
 
-* Audit logs
-* Session management
-* Rate limiting
+- API Views
+- URLs
 
 ---
 
 ### Phase 7
 
-* Testing
-* Documentation
-* Bug fixing
+- Dashboard
+- Search
+- Filters
+- Ordering
 
 ---
 
-# 21. Deliverables
+### Phase 8
 
-At completion, the backend shall provide:
-
-* Custom User Model
-* JWT Authentication
-* Registration
-* Login
-* Logout
-* Email Verification
-* Password Reset
-* Password Change
-* Profile APIs
-* Session Management
-* RBAC
-* Audit Logging
+- Logging
+- Signals
 
 ---
 
-# 22. Definition of Done
+### Phase 9
 
-Backend implementation is complete when:
-
-* All APIs functional
-* Services implemented
-* Tests passing
-* Security review complete
-* Documentation updated
-* Code review approved
+- Testing
+- Documentation
+- Code Review
 
 ---
 
-# 23. Related Documents
+# 25. Deliverables
 
-* 03_DATABASE_DESIGN.md
-* 05_FRONTEND_IMPLEMENTATION.md
-* 06_API_IMPLEMENTATION.md
-* 07_SECURITY_IMPLEMENTATION.md
-* 08_TESTING_PLAN.md
+At completion the backend provides
+
+- Project CRUD
+- Ownership validation
+- Dashboard
+- Search
+- Filtering
+- Ordering
+- Archive
+- Restore
+- Soft Delete
+- Logging
+- Production-ready APIs
+
+---
+
+# 26. Definition of Done
+
+Backend implementation is complete when
+
+- APIs functional
+- Services implemented
+- Permissions implemented
+- Validation completed
+- Tests passing
+- Documentation updated
+- Security review completed
+- Code review approved
+
+---
+
+# 27. Related Documents
+
+- 00_EPIC_OVERVIEW.md
+- 01_FEATURE_BREAKDOWN.md
+- 02_USER_STORIES.md
+- 03_DATABASE_DESIGN.md
+- 05_FRONTEND_IMPLEMENTATION.md
+- 06_API_IMPLEMENTATION.md
+- 07_SECURITY_IMPLEMENTATION.md
+- 08_TESTING_PLAN.md
 
 ---
 
 # Version History
 
-| Version | Description                                       |
-| ------- | ------------------------------------------------- |
-| 1.0.0   | Initial backend implementation guide for EPIC-01. |
+| Version | Description |
+|----------|-------------|
+| 1.0.0 | Initial backend implementation guide for EPIC-02 |
