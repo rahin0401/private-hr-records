@@ -10,12 +10,42 @@ class ProfileService:
     def get_profile(*,user: CustomUser,)-> CustomUser:
         return user
     @staticmethod
-    def update_profile(*,user: CustomUser,username: str,first_name: str,last_name: str,ip_address: str,user_agent: str,browser: str,operating_system: str,device_type: str,endpoint: str,) -> CustomUser:
+    def update_profile(*,user: CustomUser,username: str,first_name: str | None = None,last_name: str | None = None,ip_address: str,user_agent: str,browser: str,operating_system: str,device_type: str,endpoint: str,) -> CustomUser:
+        
+        update_fields = []
 
-        username = username.strip()
-        first_name = first_name.strip()
-        last_name = last_name.strip()
+        if username is not None:
+            username = username.strip()
 
+            if (
+                username != user.username
+                and CustomUser.objects.filter(
+                    username=username
+                ).exclude(
+                    pk=user.pk
+                ).exists()
+            ):
+                raise serializers.ValidationError(
+                    {
+                        "username": (
+                            "This username is already in use."
+                        )
+                    }
+                )
+
+            user.username = username
+            update_fields.append("username")
+
+
+        if first_name is not None:
+            user.first_name = first_name
+            update_fields.append("first_name")
+
+
+        if last_name is not None:
+            user.last_name = last_name
+            update_fields.append("last_name")
+    
         if (
             username != user.username
             and CustomUser.objects.filter(username=username)
@@ -30,17 +60,11 @@ class ProfileService:
 
         with transaction.atomic():
 
-            user.username = username
-            user.first_name = first_name
-            user.last_name = last_name
-
-            user.save(
-                update_fields=[
-                    "username",
-                    "first_name",
-                    "last_name",
-                ]
-            )
+            if update_fields:
+                user.save(
+                update_fields=update_fields,
+                ) 
+            
 
             AuditLog.objects.create(
                 user=user,
@@ -55,6 +79,7 @@ class ProfileService:
             )
 
         return user
+    
     @staticmethod
     def update_profile_picture(*,user: CustomUser,profile_picture,ip_address: str,user_agent: str,browser: str,operating_system: str,device_type: str,endpoint: str,) -> CustomUser:
 

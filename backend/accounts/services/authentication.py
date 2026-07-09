@@ -405,8 +405,11 @@ class AuthenticationService:
         return tokens
     
     @staticmethod
-    def refresh_access_token(*,refresh_token: str,user: CustomUser,ip_address: str,user_agent: str,browser: str,operating_system: str,device_type: str,endpoint: str,) -> dict:    
+    def refresh_access_token(*,refresh_token: str,ip_address: str,user_agent: str,browser: str,operating_system: str,device_type: str,endpoint: str,) -> dict:    
         access_token = generate_new_access_token(refresh_token=refresh_token,)
+        user = access_token["user"]
+        access = access_token["access"]
+
 
         AuditLog.objects.create(
             user=user,

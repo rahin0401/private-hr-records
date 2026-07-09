@@ -40,7 +40,6 @@ class UpdateProfileSerializer(serializers.ModelSerializer):
             "username",
             "first_name",
             "last_name",
-            "profile_picture",
         )
 
     def validate_username(self, value):

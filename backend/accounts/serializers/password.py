@@ -29,11 +29,6 @@ class ResetPasswordSerializer(serializers.Serializer):
 
     email = serializers.EmailField()
 
-    otp = serializers.CharField(
-        min_length=6,
-        max_length=6,
-    )
-
     password = serializers.CharField(
         write_only=True,
         min_length=8,
@@ -48,9 +43,6 @@ class ResetPasswordSerializer(serializers.Serializer):
 
     def validate_email(self, value):
         return normalize_email(value)
-
-    def validate_otp(self, value):
-        return validate_otp_code(value)
 
     def validate_password(self, value):
         return validate_password_strength(value)

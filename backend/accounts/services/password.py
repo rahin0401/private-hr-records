@@ -178,7 +178,7 @@ class PasswordService:
         return user
     
     @staticmethod
-    def reset_password(*,email: str,new_password: str,ip_address: str,user_agent: str,browser: str,operating_system: str,device_type: str,endpoint: str,) -> None:
+    def reset_password(*,email: str,password: str,ip_address: str,user_agent: str,browser: str,operating_system: str,device_type: str,endpoint: str,) -> None:
 
         try:
             user = CustomUser.objects.get(email=email)
@@ -216,7 +216,7 @@ class PasswordService:
 
         with transaction.atomic():
 
-            user.set_password(new_password)
+            user.set_password(password)
 
             user.save(
                 update_fields=[

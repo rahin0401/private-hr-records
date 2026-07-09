@@ -22,9 +22,15 @@ def generate_tokens(user: CustomUser)->TokenPair:
 
 def refresh_access_token(
     refresh_token: str,
-) -> str:
+) -> dict:
     refresh = RefreshToken(refresh_token)
-    return str(refresh.access_token)
+    user_id = refresh["user_id"]
+    user = CustomUser.objects.get(id=user_id)
+    access = str(refresh.access_token)
+    return  {
+        "user": user,
+        "access": access,
+    }
 
 def blacklist_refresh_token(refresh_token: str,) -> None:
 
