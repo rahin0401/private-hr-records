@@ -4,26 +4,29 @@ from django.contrib.auth import authenticate
 from rest_framework import serializers
 from django.utils import timezone
 from django.conf import settings
-
+from accounts.services.session import SessionService
+from infrastructure.redis.otp import RedisOTPService
+from infrastructure.redis.rate_limit import RedisRateLimitService
 from accounts.models import (
     AuditAction,
     AuditLog,
     AuditStatus,
     CustomUser,
     EmailOTP,
-    LoginAttempt,
     OTPPurpose,
+    UserSession,
+    SessionStatus,
+    RevokedReason,
 )
 
-from accounts.utils.email import (
-    send_verification_email,
-    send_welcome_email,
-    send_account_locked_email,
+from infrastructure.celery.email_tasks import(
+    send_verification_email_task,
+    send_welcome_email_task,
+    send_account_locked_email_task,
 )
-
 from accounts.utils.jwt import (
     generate_tokens,
-    blacklist_refresh_token,
+    get_refresh_token_payload,
     refresh_access_token as generate_new_access_token,
 )
 
@@ -34,8 +37,16 @@ from accounts.utils.otp import (
     verify_otp,
 )
 
+from infrastructure.redis.constants import (
+    LOGIN_ATTEMPTS,
+    LOGIN_LOCK,
+)
+
+redis_otp = RedisOTPService()
+redis_rate_limit = RedisRateLimitService()
 
 class AuthenticationService:
+
 
     @staticmethod
     def register_user(*,email: str,username: str,password: str,ip_address: str,user_agent: str,browser: str,operating_system: str,device_type: str,endpoint: str,) -> CustomUser:
@@ -75,8 +86,17 @@ class AuthenticationService:
                 purpose=OTPPurpose.EMAIL_VERIFICATION,
                 expires_at=expires_at,
             )
+            redis_otp.cache_email_otp(
+            email=user.email,
+            otp_hash=otp_hash,
+            expires_at=expires_at,
+            )
+        
+            redis_otp.set_email_otp_cooldown(
+                email=user.email,
+            )
 
-            send_verification_email(
+            send_verification_email_task.delay(
                 recipient_email=user.email,
                 otp=otp,
             )
@@ -95,10 +115,13 @@ class AuthenticationService:
 
         return user
     
+   
+
     @staticmethod
     def verify_email_otp(*, email: str,otp: str,ip_address: str,user_agent: str,browser: str,operating_system: str,device_type: str,endpoint: str,) -> CustomUser:
         try:
             user = CustomUser.objects.get(email=email)
+            cached_otp = redis_otp.get_email_otp(email=email,)
 
         except CustomUser.DoesNotExist:
             raise serializers.ValidationError(
@@ -177,7 +200,7 @@ class AuthenticationService:
             ]
         )
 
-            send_welcome_email(
+            send_welcome_email_task.delay(
             recipient_email=user.email,
             username=user.username,
         )
@@ -194,8 +217,17 @@ class AuthenticationService:
             endpoint=endpoint,
         )
 
+        redis_otp.delete_email_otp(
+            email=email,
+        )
+
+        redis_otp.delete_email_otp_cooldown(
+            email=email,
+        )
         return user
     
+   
+
     @staticmethod
     def resend_verification_otp(*,email: str,ip_address: str,user_agent: str,browser: str,operating_system: str,device_type: str,endpoint: str,) -> None:
 
@@ -240,6 +272,19 @@ class AuthenticationService:
             }
         )
 
+        remaining = redis_otp.get_email_otp_cooldown(
+            email=user.email,
+        )
+
+        if remaining > 0:
+            raise serializers.ValidationError(
+                {
+                    "otp": (
+                        f"Please wait {remaining} seconds before requesting another OTP."
+                    )
+                }
+            )
+        
         otp = generate_otp()
 
         with transaction.atomic():
@@ -256,8 +301,17 @@ class AuthenticationService:
                 "attempts",
             ]
     )   
+            redis_otp.cache_email_otp(
+            email=user.email,
+            otp_hash=email_otp.otp_hash,
+            expires_at=email_otp.expires_at,
+            )
 
-            send_verification_email(
+            redis_otp.set_email_otp_cooldown(
+                email=user.email,
+            )
+
+            send_verification_email_task.delay(
             recipient_email=user.email,
             otp=otp,
     )   
@@ -274,22 +328,31 @@ class AuthenticationService:
             endpoint=endpoint,
     )
             
+   
+
     @staticmethod
     def login_user(*,email: str,password: str,ip_address: str,user_agent: str,browser: str,operating_system: str,device_type: str,endpoint: str,) -> dict:
     
-        login_attempt, _ = LoginAttempt.objects.get_or_create(email=email,ip_address=ip_address)
-    
-        # Check if account is temporarily locked
-        if (
-            login_attempt.is_locked
-            and login_attempt.locked_until
-            and timezone.now() < login_attempt.locked_until
+        attempt_key = LOGIN_ATTEMPTS.format(
+            email=email,
+        )
+
+        lock_key = LOGIN_LOCK.format(
+            email=email,
+        )
+
+        if redis_rate_limit.is_locked(
+            key=lock_key,
         ):
+            remaining = redis_rate_limit.get_lock_ttl(
+                key=lock_key,
+            )
+
             raise serializers.ValidationError(
                 {
                     "account": (
-                        "Your account is temporarily locked. "
-                        "Please try again later."
+                        f"Your account is temporarily locked. "
+                        f"Try again in {remaining} seconds."
                     )
                 }
             )
@@ -308,30 +371,24 @@ class AuthenticationService:
                 .first()
             )
     
-            login_attempt.attempts += 1
+            attempts = redis_rate_limit.increment(
+                key=attempt_key,
+                ttl=settings.LOGIN_ATTEMPTS_TTL,
+            )
     
-            if login_attempt.attempts >= settings.MAX_LOGIN_ATTEMPTS:
-                login_attempt.is_locked = True
-                login_attempt.locked_until = (
-                    timezone.now()
-                    + timedelta(
-                        minutes=settings.ACCOUNT_LOCK_DURATION
-                    )
+            if attempts >= settings.MAX_LOGIN_ATTEMPTS:
+                redis_rate_limit.set_lock(
+                    key=lock_key,
+                    ttl=settings.ACCOUNT_LOCK_DURATION,
                 )
     
                 if existing_user:
-                    send_account_locked_email(
+                    send_account_locked_email_task.delay(
                         recipient_email=existing_user.email,
                         username=existing_user.username,
                     )
     
-            login_attempt.save(
-                update_fields=[
-                    "attempts",
-                    "is_locked",
-                    "locked_until",
-                ]
-            )
+        
             if existing_user:
                 AuditLog.objects.create(
                     user=existing_user,
@@ -373,21 +430,32 @@ class AuthenticationService:
             )
     
         # Generate JWT Tokens
+        # Generate JWT Tokens
         tokens = generate_tokens(user)
-    
+
+        SessionService.create_session(
+            user=user,
+            refresh_token_jti=tokens["refresh_jti"],
+            login_provider=user.provider,
+            device_name=None,
+            device_type=device_type,
+            browser=browser,
+            browser_version=None,
+            operating_system=operating_system,
+            operating_system_version=None,
+            ip_address=ip_address,
+            user_agent=user_agent,
+            expires_at=tokens["refresh_expires_at"],
+        )
         # Successful Login
         with transaction.atomic():
         
-            login_attempt.attempts = 0
-            login_attempt.is_locked = False
-            login_attempt.locked_until = None
-    
-            login_attempt.save(
-                update_fields=[
-                    "attempts",
-                    "is_locked",
-                    "locked_until",
-                ]
+            redis_rate_limit.reset(
+                key=attempt_key,
+            )
+
+            redis_rate_limit.clear_lock(
+                key=lock_key,
             )
     
             AuditLog.objects.create(
@@ -404,12 +472,30 @@ class AuthenticationService:
     
         return tokens
     
+   
+   
     @staticmethod
-    def refresh_access_token(*,refresh_token: str,ip_address: str,user_agent: str,browser: str,operating_system: str,device_type: str,endpoint: str,) -> dict:    
-        access_token = generate_new_access_token(refresh_token=refresh_token,)
-        user = access_token["user"]
-        access = access_token["access"]
+    def refresh_access_token(
+        *,
+        refresh_token: str,
+        ip_address: str,
+        user_agent: str,
+        browser: str,
+        operating_system: str,
+        device_type: str,
+        endpoint: str,
+    ) -> dict:
 
+        token_data = generate_new_access_token(
+            refresh_token=refresh_token,
+        )
+
+        user = token_data["user"]
+
+        SessionService.update_last_activity(
+            user=user,
+            refresh_token_jti=token_data["refresh_jti"],
+        )
 
         AuditLog.objects.create(
             user=user,
@@ -424,12 +510,47 @@ class AuthenticationService:
         )
 
         return {
-            "access": access_token,
+            "access": token_data["access"],
         }
-    @staticmethod
-    def logout_user(*,user: CustomUser,refresh_token: str,ip_address: str,user_agent: str,browser: str,operating_system: str,device_type: str,endpoint: str,) -> None:
-        blacklist_refresh_token(refresh_token=refresh_token,)
 
+
+    
+    @staticmethod
+    def logout_user(
+        *,
+        user: CustomUser,
+        refresh_token: str,
+        ip_address: str,
+        user_agent: str,
+        browser: str,
+        operating_system: str,
+        device_type: str,
+        endpoint: str,
+    ) -> None:
+    
+        payload = get_refresh_token_payload(
+            refresh_token=refresh_token,
+        )
+    
+        try:
+            session = UserSession.objects.get(
+        user=user,
+        refresh_token_jti=payload["jti"],
+        status=SessionStatus.ACTIVE,
+    )
+        except UserSession.DoesNotExist:
+            raise serializers.ValidationError(
+        {
+            "session": "Active session not found."
+        }
+    )
+        SessionService.revoke_session(
+            user=user,
+            session_uuid=session.uuid,
+            refresh_token=refresh_token,
+            revoked_reason=RevokedReason.USER_LOGOUT,
+        )
+    
         AuditLog.objects.create(
             user=user,
             action=AuditAction.LOGOUT,
@@ -440,4 +561,4 @@ class AuthenticationService:
             operating_system=operating_system,
             device_type=device_type,
             endpoint=endpoint,
-        ) 
+        )

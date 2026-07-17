@@ -14,6 +14,11 @@ from pathlib import Path
 from datetime import timedelta
 import environ
 
+from infrastructure.celery.queues import CELERY_QUEUES
+from infrastructure.celery.routing import CELERY_TASK_ROUTES
+from infrastructure.celery.beat import CELERY_BEAT_SCHEDULE
+
+
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -47,6 +52,8 @@ INSTALLED_APPS = [
     "rest_framework_simplejwt",
     "corsheaders",
     "rest_framework_simplejwt.token_blacklist",
+    "django_celery_results",
+    "django_celery_beat",
 
 
     # Local apps
@@ -104,6 +111,17 @@ DATABASES = {
         'PORT': '5432',
 }
 }
+
+REDIS_CONFIG = {
+    "HOST": "localhost",
+    "PORT": 6379,
+    "DB": 0,
+    "PASSWORD": None,
+    "DECODE_RESPONSES": True,
+    "SOCKET_TIMEOUT": 5,
+    "SOCKET_CONNECT_TIMEOUT": 5,
+}
+
 
 SIMPLE_JWT = {
     'ACCESS_TOKEN_LIFETIME': timedelta(minutes=15),
@@ -195,3 +213,47 @@ GOOGLE_CLIENT_ID = env("GOOGLE_CLIENT_ID")
 GITHUB_CLIENT_ID = env("GITHUB_CLIENT_ID")
 
 GITHUB_CLIENT_SECRET = env("GITHUB_CLIENT_SECRET")
+
+# Celery Configuration
+
+CELERY_BROKER_URL = env(
+    "CELERY_BROKER_URL",
+    default="amqp://guest:guest@127.0.0.1:5672//",
+)
+
+CELERY_RESULT_BACKEND = env(
+    "CELERY_RESULT_BACKEND",
+    default="redis://127.0.0.1:6379/1",
+)
+
+CELERY_ACCEPT_CONTENT = ["json"]
+
+CELERY_TASK_SERIALIZER = "json"
+
+CELERY_RESULT_SERIALIZER = "json"
+
+CELERY_TIMEZONE = TIME_ZONE
+
+CELERY_ENABLE_UTC = True
+
+CELERY_TASK_TRACK_STARTED = True
+
+CELERY_TASK_ACKS_LATE = True
+
+CELERY_WORKER_PREFETCH_MULTIPLIER = 1
+
+CELERY_TASK_TIME_LIMIT = 1800
+
+CELERY_TASK_SOFT_TIME_LIMIT = 1500
+
+CELERY_RESULT_EXPIRES = 86400
+
+CELERY_TASK_QUEUES = CELERY_QUEUES
+
+CELERY_TASK_ROUTES = CELERY_TASK_ROUTES
+
+CELERY_TASK_DEFAULT_QUEUE = "default"
+CELERY_TASK_DEFAULT_EXCHANGE = "default"
+CELERY_TASK_DEFAULT_ROUTING_KEY = "default"
+
+CELERY_BEAT_SCHEDULE = CELERY_BEAT_SCHEDULE

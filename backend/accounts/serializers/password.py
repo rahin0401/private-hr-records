@@ -58,3 +58,59 @@ class ResetPasswordSerializer(serializers.Serializer):
         attrs.pop("confirm_password", None)
 
         return attrs
+
+
+class ChangePasswordSerializer(serializers.Serializer):
+
+    current_password = serializers.CharField(
+        write_only=True,
+        min_length=8,
+        style={"input_type": "password"},
+    )
+
+    new_password = serializers.CharField(
+        write_only=True,
+        min_length=8,
+        style={"input_type": "password"},
+    )
+
+    confirm_password = serializers.CharField(
+        write_only=True,
+        min_length=8,
+        style={"input_type": "password"},
+    )
+
+    def validate_current_password(self, value):
+        value = value.strip()
+
+        if not value:
+            raise serializers.ValidationError(
+                "Current password is required."
+            )
+
+        return value
+
+    def validate_new_password(self, value):
+        return validate_password_strength(value)
+
+    def validate(self, attrs):
+
+        if attrs["current_password"] == attrs["new_password"]:
+            raise serializers.ValidationError(
+                {
+                    "new_password": (
+                        "New password must be different from the current password."
+                    )
+                }
+            )
+
+        if attrs["new_password"] != attrs["confirm_password"]:
+            raise serializers.ValidationError(
+                {
+                    "confirm_password": "Passwords do not match."
+                }
+            )
+
+        attrs.pop("confirm_password", None)
+
+        return attrs

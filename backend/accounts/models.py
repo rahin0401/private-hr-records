@@ -33,6 +33,20 @@ class AuditStatus(models.TextChoices):
     SUCCESS = "SUCCESS","Success"
     FAILURE = "FAILURE",'Failure'
 
+class SessionStatus(models.TextChoices):
+    ACTIVE = "ACTIVE", "Active"
+    EXPIRED = "EXPIRED", "Expired"
+    REVOKED = "REVOKED", "Revoked"
+    LOGGED_OUT = "LOGGED_OUT", "Logged Out"
+
+class RevokedReason(models.TextChoices):
+    USER_LOGOUT = "USER_LOGOUT", "User Logout"
+    LOGOUT_ALL = "LOGOUT_ALL", "Logout All Devices"
+    PASSWORD_CHANGED = "PASSWORD_CHANGED", "Password Changed"
+    ADMIN_REVOKED = "ADMIN_REVOKED", "Admin Revoked"
+    SECURITY = "SECURITY", "Security"
+    TOKEN_REUSE = "TOKEN_REUSE", "Refresh Token Reuse"
+    EXPIRED = "EXPIRED", "Expired"
 
 class CustomUserManager(BaseUserManager):
     def create_user(self,email,username,password=None,**extra_fields):
@@ -55,6 +69,9 @@ class CustomUserManager(BaseUserManager):
         if extra_fields.get("is_superuser") is not True:
             raise ValueError("Superuser must have is_superuser=True")
         return self.create_user(email=email,username=username,password=password,**extra_fields)   
+    
+
+    
 #This model is for supporting local, authentication , google oauth and github oauth
 class CustomUser(AbstractUser):
     uuid = models.UUIDField(default=uuid.uuid4, editable=False,unique=True,)
@@ -153,3 +170,120 @@ class AuditLog(models.Model):
 
     def __str__(self):
         return f"{self.user.email}-{self.action}-{self.status}"
+
+
+class UserSession(models.Model):
+    user = models.ForeignKey(
+        CustomUser,
+        on_delete=models.CASCADE,
+        related_name="sessions",
+    )
+
+    uuid = models.UUIDField(
+        default=uuid.uuid4,
+        editable=False,
+        unique=True,
+    )
+
+    session_id = models.CharField(
+        max_length=255,
+        unique=True,
+        db_index=True,
+    )
+
+    refresh_token_jti = models.CharField(
+        max_length=255,
+        unique=True,
+        db_index=True,
+    )
+
+    login_provider = models.CharField(
+        max_length=20,
+        choices=AuthenticationProvider.choices,
+        default=AuthenticationProvider.LOCAL,
+    )
+
+    device_name = models.CharField(
+        max_length=150,
+        blank=True,
+        null=True,
+    )
+
+    device_type = models.CharField(
+        max_length=50,
+        blank=True,
+        null=True,
+    )
+
+    browser = models.CharField(
+        max_length=100,
+        blank=True,
+        null=True,
+    )
+
+    browser_version = models.CharField(
+        max_length=50,
+        blank=True,
+        null=True,
+    )
+
+    operating_system = models.CharField(
+        max_length=100,
+        blank=True,
+        null=True,
+    )
+
+    operating_system_version = models.CharField(
+        max_length=50,
+        blank=True,
+        null=True,
+    )
+
+    ip_address = models.GenericIPAddressField()
+
+    user_agent = models.TextField()
+
+    status = models.CharField(
+        max_length=20,
+        choices=SessionStatus.choices,
+        default=SessionStatus.ACTIVE,
+    )
+
+    is_current = models.BooleanField(default=False)
+
+    revoked_at = models.DateTimeField(
+        blank=True,
+        null=True,
+    )
+
+    revoked_reason = models.CharField(
+        max_length=50,
+        choices=RevokedReason.choices,
+        blank=True,
+        null=True,
+    )
+
+    last_activity = models.DateTimeField(auto_now=True)
+
+    expires_at = models.DateTimeField()
+
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ["-last_activity"]
+
+        indexes = [
+            models.Index(fields=["user", "status"]),
+            models.Index(fields=["session_id"]),
+            models.Index(fields=["refresh_token_jti"]),
+            models.Index(fields=["expires_at"]),
+            models.Index(fields=["last_activity"]),
+        ]
+
+        verbose_name = "User Session"
+        verbose_name_plural = "User Sessions"
+
+    def __str__(self):
+        return f"{self.user.email} - {self.device_type or 'Unknown Device'}"

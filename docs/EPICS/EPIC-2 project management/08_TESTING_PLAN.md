@@ -1,420 +1,553 @@
-# 08_TESTING_PLAN.md
+# EPIC-02 — Project Workspace Management
 
-**Project:** Privacy-Preserving Synthetic HR Records Generator
-**Epic:** EPIC-01 – Authentication & User Management
-**Document:** Testing Plan
-**Version:** 1.0.0
-**Status:** Draft
+## 08_TESTING_PLAN.md
+
+---
+
+# Document Information
+
+| Property | Value |
+|----------|-------|
+| Project | Privacy-Preserving Synthetic HR Records Generator |
+| Epic | EPIC-02 |
+| Document | Testing Plan |
+| Version | 1.0.0 |
+| Status | Draft |
+| Depends On | 03_DATABASE_DESIGN.md, 04_BACKEND_IMPLEMENTATION.md, 06_API_IMPLEMENTATION.md, 07_SECURITY_IMPLEMENTATION.md |
 
 ---
 
 # 1. Purpose
 
-This document defines the testing strategy for EPIC-01 Authentication & User Management.
+This document defines the testing strategy for **EPIC-02 – Project Workspace Management**.
 
-The objective is to verify that all authentication, authorization, and user management functionality is correct, secure, reliable, and production-ready.
+The objective is to verify that every functional and non-functional requirement is implemented correctly while ensuring the module is production-ready, secure, maintainable, and extensible.
+
+Testing is performed throughout development and is considered a mandatory engineering activity.
 
 ---
 
 # 2. Testing Objectives
 
-Verify:
+The testing process shall verify:
 
-* Functional correctness
-* API correctness
-* Authentication
-* Authorization
-* Security
-* Validation
-* Session management
-* Performance
-* Error handling
+- Functional correctness
+- API correctness
+- Business rule enforcement
+- Ownership validation
+- Security
+- Performance
+- Reliability
+- Error handling
+- Data integrity
 
 ---
 
 # 3. Testing Scope
 
-### In Scope
+The following components shall be tested:
 
-* User Registration
-* Login
-* Logout
-* JWT Authentication
-* Refresh Tokens
-* Email Verification
-* Password Reset
-* Password Change
-* User Profile
-* Session Management
-* Role-Based Access Control
-* Audit Logging
-* Rate Limiting
-
-### Out of Scope
-
-* OAuth
-* SSO
-* MFA
-* Multi-tenancy
+- Project Model
+- Project Manager
+- Validators
+- Serializers
+- Services
+- Permissions
+- API Views
+- URL Routing
+- Dashboard
+- Search
+- Filters
+- Pagination
+- Ordering
+- Audit Logging
 
 ---
 
-# 4. Test Levels
+# 4. Testing Types
 
 ## Unit Testing
 
-Test:
+Verify individual components independently.
 
-* Models
-* Managers
-* Validators
-* Serializers
-* Services
-* Utility functions
+Coverage includes:
+
+- Models
+- Managers
+- Validators
+- Serializers
+- Services
+- Utility functions
 
 ---
 
 ## Integration Testing
 
-Test interactions between:
+Verify interaction between components.
 
-* Views ↔ Services
-* Services ↔ Database
-* JWT ↔ Authentication
-* Session ↔ User
-* Audit ↔ Authentication
+Examples:
+
+- View → Service → Model
+- Serializer → Service
+- Permission → View
+- Authentication → API
 
 ---
 
 ## API Testing
 
-Verify:
+Verify REST endpoints.
 
-* Status codes
-* Authentication
-* Validation
-* Authorization
-* Response format
-* Error handling
+Each endpoint shall be tested for:
 
----
-
-## End-to-End Testing
-
-Validate complete workflows:
-
-* Registration → Email Verification → Login
-* Login → Profile → Logout
-* Password Reset → Login
-* Change Password → Login with new password
+- Success
+- Validation failure
+- Authentication failure
+- Authorization failure
+- Invalid input
+- Invalid state
+- Error responses
 
 ---
 
-# 5. Functional Test Cases
+## Permission Testing
 
-## Registration
+Verify object-level authorization.
 
-Test:
+Examples
 
-* Valid registration
-* Duplicate email
-* Duplicate username
-* Invalid email
-* Weak password
-* Missing required fields
-
-Expected:
-
-* Correct validation
-* User created
-* Password hashed
-* Verification email triggered
+- Owner can update project.
+- Owner can archive project.
+- Non-owner cannot access project.
+- Non-owner cannot delete project.
 
 ---
 
-## Login
-
-Test:
-
-* Valid credentials
-* Invalid password
-* Invalid username/email
-* Inactive account
-* Suspended account
-
-Expected:
-
-* JWT returned on success
-* Generic error on failure
-
----
-
-## Logout
-
-Test:
-
-* Valid logout
-* Invalid token
-* Already revoked token
-
-Expected:
-
-* Session terminated
-* Refresh token blacklisted
-
----
-
-## Email Verification
-
-Test:
-
-* Valid token
-* Expired token
-* Invalid token
-* Already verified account
-
----
-
-## Password Reset
-
-Test:
-
-* Existing email
-* Non-existing email
-* Expired reset token
-* Invalid reset token
-* Successful reset
-
----
-
-## Password Change
-
-Test:
-
-* Correct current password
-* Incorrect current password
-* Weak new password
-* Password confirmation mismatch
-
----
-
-## Profile
-
-Test:
-
-* Retrieve profile
-* Update profile
-* Unauthorized access
-* Invalid updates
-
----
-
-## Session Management
-
-Test:
-
-* View active sessions
-* Revoke current session
-* Revoke another session
-* Logout all sessions
-
----
-
-# 6. Security Testing
+## Validation Testing
 
 Verify:
 
-* Password hashing
-* JWT validation
-* Token expiration
-* Token rotation
-* Token blacklisting
-* Authorization rules
-* Role permissions
-* Rate limiting
-* Secure password reset
-* Email verification
+- Required fields
+- Duplicate names
+- Invalid UUID
+- Maximum length
+- Empty values
+- Invalid lifecycle transitions
 
 ---
 
-# 7. Validation Testing
+## Security Testing
 
-Verify:
+Verify
 
-* Email validation
-* Username validation
-* Password policy
-* Required fields
-* Maximum lengths
-* Invalid data types
+- JWT authentication
+- Ownership validation
+- Object-level authorization
+- IDOR protection
+- Soft delete behavior
+- Unauthorized access prevention
+
+---
+
+## Regression Testing
+
+Verify that new changes do not break:
+
+- Existing APIs
+- Dashboard
+- Project lifecycle
+- Authentication
+- Permissions
+
+---
+
+# 5. Test Environment
+
+Environment
+
+- Local Development
+- PostgreSQL
+- Django
+- DRF
+
+Future
+
+- Docker
+- CI/CD Pipeline
+- Staging Environment
+
+---
+
+# 6. Test Data
+
+Create reusable test fixtures.
+
+Examples
+
+### Users
+
+```
+Owner User
+
+Non-owner User
+
+Administrator (Future)
+```
+
+---
+
+### Projects
+
+```
+Active Project
+
+Archived Project
+
+Deleted Project
+```
+
+---
+
+# 7. Functional Test Cases
+
+---
+
+## FT-001
+
+Feature
+
+Create Project
+
+Expected Result
+
+Project successfully created.
+
+---
+
+## FT-002
+
+Feature
+
+Duplicate Project
+
+Expected Result
+
+Validation error returned.
+
+---
+
+## FT-003
+
+Feature
+
+Update Project
+
+Expected Result
+
+Project updated.
+
+---
+
+## FT-004
+
+Feature
+
+Archive Project
+
+Expected Result
+
+Project status changed.
+
+---
+
+## FT-005
+
+Feature
+
+Restore Project
+
+Expected Result
+
+Project restored.
+
+---
+
+## FT-006
+
+Feature
+
+Delete Project
+
+Expected Result
+
+Soft delete executed.
+
+---
+
+## FT-007
+
+Feature
+
+List Projects
+
+Expected Result
+
+Only owner's projects returned.
+
+---
+
+## FT-008
+
+Feature
+
+Dashboard
+
+Expected Result
+
+Statistics returned successfully.
 
 ---
 
 # 8. Negative Test Cases
 
-Verify system behavior when:
+---
 
-* Missing JWT
-* Invalid JWT
-* Expired JWT
-* Invalid request payload
-* SQL injection attempts
-* XSS payloads
-* Unauthorized resource access
-* Duplicate registration
-* Invalid HTTP methods
+## NT-001
 
-The system should reject invalid requests gracefully.
+Attempt project creation without authentication.
+
+Expected
+
+401 Unauthorized
 
 ---
 
-# 9. Performance Testing
+## NT-002
 
-Measure:
+Access another user's project.
 
-* Login response time
-* Registration response time
-* Profile retrieval
-* JWT validation
-* Session lookup
+Expected
 
-Authentication endpoints should remain responsive under expected workloads.
+403 Forbidden
 
 ---
 
-# 10. Test Data
+## NT-003
 
-Create reusable test fixtures:
+Duplicate project name.
 
-### Users
+Expected
 
-* Active user
-* Inactive user
-* Suspended user
-* Admin user
-
-### Tokens
-
-* Valid token
-* Expired token
-* Revoked token
-* Invalid token
+Validation error.
 
 ---
 
-# 11. Automation
+## NT-004
 
-Automate:
+Invalid UUID.
 
-* Unit tests
-* API tests
-* Integration tests
-* Authentication workflows
-* Regression suite
+Expected
 
-Automation should be included in future CI/CD pipelines.
+404 Not Found
 
 ---
 
-# 12. Test Environment
+## NT-005
 
-Environment:
+Archive already archived project.
 
-* Django Test Framework
-* PostgreSQL Test Database
-* DRF APIClient
-* Factory-based test data (recommended)
+Expected
 
-Tests should remain isolated from production resources.
+Business exception returned.
 
 ---
 
-# 13. Test Coverage Goals
+## NT-006
 
-Target coverage:
+Restore active project.
 
-| Component       | Goal |
-| --------------- | ---- |
-| Models          | 90%+ |
-| Services        | 90%+ |
-| Serializers     | 90%+ |
-| Views           | 85%+ |
-| Permissions     | 95%+ |
-| Authentication  | 95%+ |
-| Overall Backend | 90%+ |
+Expected
 
-Coverage targets guide quality but do not replace meaningful test cases.
+Business exception returned.
 
 ---
 
-# 14. Bug Reporting
+# 9. API Test Matrix
 
-Each defect should include:
-
-* ID
-* Summary
-* Severity
-* Priority
-* Steps to reproduce
-* Expected result
-* Actual result
-* Environment
-* Status
+| Endpoint | GET | POST | PATCH | DELETE |
+|----------|-----|------|-------|--------|
+| /projects | ✓ | ✓ | - | - |
+| /projects/{id} | ✓ | - | ✓ | ✓ |
+| /projects/{id}/archive | - | ✓ | - | - |
+| /projects/{id}/restore | - | ✓ | - | - |
+| /projects/dashboard | ✓ | - | - | - |
 
 ---
 
-# 15. Exit Criteria
+# 10. Performance Testing
+
+Verify
+
+- Pagination performance
+- Search performance
+- Dashboard response
+- Database query count
+
+Target
+
+Project list endpoint should return within acceptable response times under expected development workloads.
+
+---
+
+# 11. Security Test Matrix
+
+| Test | Expected |
+|------|----------|
+| Invalid JWT | 401 |
+| Expired JWT | 401 |
+| Missing JWT | 401 |
+| Unauthorized Access | 403 |
+| Invalid UUID | 404 |
+| Soft Deleted Project | Hidden |
+
+---
+
+# 12. Database Testing
+
+Verify
+
+- Constraints
+- Unique indexes
+- Foreign keys
+- Soft delete
+- Cascade behavior
+- Audit fields
+
+---
+
+# 13. Logging Verification
+
+Verify logs generated for
+
+- Create
+- Update
+- Archive
+- Restore
+- Delete
+- Unauthorized access
+- Validation failures
+
+Ensure no sensitive information is logged.
+
+---
+
+# 14. Test Automation
+
+Automated tests shall be written using:
+
+Backend
+
+- Django Test Framework
+- DRF APIClient
+
+Future
+
+- Pytest
+- Factory Boy
+- Faker
+- Coverage.py
+
+---
+
+# 15. Coverage Goals
+
+| Component | Target |
+|------------|---------|
+| Models | 95% |
+| Services | 95% |
+| Serializers | 95% |
+| Permissions | 100% |
+| API Views | 90% |
+| Overall Backend | ≥90% |
+
+---
+
+# 16. Entry Criteria
+
+Testing begins when:
+
+- Backend implementation completed
+- Database migrated
+- APIs functional
+- Documentation updated
+
+---
+
+# 17. Exit Criteria
 
 Testing is complete when:
 
-* All planned test cases executed.
-* Critical defects resolved.
-* Authentication verified.
-* Authorization verified.
-* Security tests passed.
-* Regression tests passed.
-* Documentation updated.
+- All critical tests pass
+- No Critical severity defects remain
+- No High severity defects remain
+- Medium defects reviewed
+- Product Owner approval received
 
 ---
 
-# 16. Deliverables
+# 18. Defect Severity
 
-* Unit Test Suite
-* Integration Test Suite
-* API Test Suite
-* Security Test Report
-* Coverage Report
-* Bug Report
-* Test Execution Report
+| Severity | Description |
+|-----------|-------------|
+| Critical | System unusable |
+| High | Major feature broken |
+| Medium | Feature partially affected |
+| Low | Minor issue |
+| Cosmetic | UI/UX issue |
 
 ---
 
-# 17. Definition of Done
+# 19. Deliverables
+
+Testing produces:
+
+- Unit Test Report
+- Integration Test Report
+- API Test Report
+- Security Test Report
+- Coverage Report
+- Bug Report
+- Test Summary Report
+
+---
+
+# 20. Definition of Done
 
 Testing is complete when:
 
-* Required test coverage achieved.
-* No Critical defects remain.
-* No High severity defects remain.
-* Authentication workflows verified.
-* Security requirements validated.
-* All automated tests pass.
+- All planned tests executed
+- Critical defects resolved
+- High defects resolved
+- Coverage targets achieved
+- Security tests passed
+- Regression tests passed
+- Reports completed
+- Epic approved
 
 ---
 
-# 18. Related Documents
+# 21. Related Documents
 
-* 04_BACKEND_IMPLEMENTATION.md
-* 06_API_IMPLEMENTATION.md
-* 07_SECURITY_IMPLEMENTATION.md
-* 11_CODING_STANDARDS.md
-* 12_SECURITY_GUIDELINES.md
-* 13_TESTING_STRATEGY.md
+- 03_DATABASE_DESIGN.md
+- 04_BACKEND_IMPLEMENTATION.md
+- 06_API_IMPLEMENTATION.md
+- 07_SECURITY_IMPLEMENTATION.md
+- 09_SPRINT_PLAN.md
 
 ---
 
 # Version History
 
-| Version | Description                                                        |
-| ------- | ------------------------------------------------------------------ |
-| 1.0.0   | Initial testing plan for EPIC-01 Authentication & User Management. |
+| Version | Description |
+|----------|-------------|
+| 1.0.0 | Initial testing plan for EPIC-02 |

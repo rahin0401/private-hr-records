@@ -45,18 +45,6 @@ class ProfileService:
         if last_name is not None:
             user.last_name = last_name
             update_fields.append("last_name")
-    
-        if (
-            username != user.username
-            and CustomUser.objects.filter(username=username)
-            .exclude(pk=user.pk)
-            .exists()
-        ):
-            raise serializers.ValidationError(
-                {
-                    "username": "This username is already in use."
-                }
-            )
 
         with transaction.atomic():
 

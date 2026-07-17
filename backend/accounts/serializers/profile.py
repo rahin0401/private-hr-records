@@ -1,3 +1,4 @@
+import os 
 from rest_framework import serializers
 from accounts.models import CustomUser
 from accounts.utils.validators import normalize_username
@@ -58,3 +59,54 @@ class ProfilePictureSerializer(serializers.ModelSerializer):
         fields = (
             "profile_picture",
         )
+
+
+class ProfilePictureSerializer(serializers.ModelSerializer):
+
+    MAX_FILE_SIZE = 5 * 1024 * 1024  # 5 MB
+
+    ALLOWED_EXTENSIONS = {
+        ".jpg",
+        ".jpeg",
+        ".png",
+        ".webp",
+    }
+
+    ALLOWED_CONTENT_TYPES = {
+        "image/jpeg",
+        "image/png",
+        "image/webp",
+    }
+
+    class Meta:
+        model = CustomUser
+
+        fields = (
+            "profile_picture",
+        )
+
+    def validate_profile_picture(self, value):
+
+        if not value:
+            raise serializers.ValidationError(
+                "Profile picture is required."
+            )
+
+        if value.size > self.MAX_FILE_SIZE:
+            raise serializers.ValidationError(
+                "Profile picture must not exceed 5 MB."
+            )
+
+        extension = os.path.splitext(value.name)[1].lower()
+
+        if extension not in self.ALLOWED_EXTENSIONS:
+            raise serializers.ValidationError(
+                "Unsupported image format. Allowed formats are JPG, JPEG, PNG and WEBP."
+            )
+
+        if value.content_type not in self.ALLOWED_CONTENT_TYPES:
+            raise serializers.ValidationError(
+                "Invalid image content type."
+            )
+
+        return value

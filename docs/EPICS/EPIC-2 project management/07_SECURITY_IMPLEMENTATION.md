@@ -1,389 +1,457 @@
-# 07_SECURITY_IMPLEMENTATION.md
+# EPIC-02 — Project Workspace Management
 
-**Project:** Privacy-Preserving Synthetic HR Records Generator
-**Epic:** EPIC-01 – Authentication & User Management
-**Document:** Security Implementation Guide
-**Version:** 1.0.0
-**Status:** Draft
+## 07_SECURITY_IMPLEMENTATION.md
+
+---
+
+# Document Information
+
+| Property | Value |
+|----------|-------|
+| Project | Privacy-Preserving Synthetic HR Records Generator |
+| Epic | EPIC-02 |
+| Document | Security Implementation Guide |
+| Version | 1.0.0 |
+| Status | Draft |
+| Depends On | 00_EPIC_OVERVIEW.md, 04_BACKEND_IMPLEMENTATION.md, 06_API_IMPLEMENTATION.md |
 
 ---
 
 # 1. Purpose
 
-This document defines the security implementation for the Authentication & User Management module. It translates the project's security architecture into concrete implementation tasks.
+This document defines the security architecture and implementation requirements for **EPIC-02 – Project Workspace Management**.
+
+The objective is to ensure every project operation is secure, authenticated, authorized, auditable, and protected against common application attacks.
+
+Security is implemented as a system-wide responsibility rather than an individual feature.
 
 ---
 
 # 2. Security Objectives
 
-The authentication system shall:
+The Project module shall guarantee:
 
-* Protect user identities.
-* Prevent unauthorized access.
-* Secure user credentials.
-* Protect authentication tokens.
-* Prevent common authentication attacks.
-* Maintain auditability.
-* Support secure account recovery.
-
----
-
-# 3. Authentication Security
-
-### JWT Authentication
-
-Implement:
-
-* Access Token
-* Refresh Token
-* Token Rotation
-* Token Blacklisting
-
-Requirements:
-
-* Short-lived access tokens.
-* Long-lived refresh tokens.
-* Rotate refresh tokens.
-* Blacklist revoked refresh tokens.
+- Authentication
+- Authorization
+- Data Ownership
+- Data Integrity
+- Confidentiality
+- Availability
+- Auditability
+- Secure API Communication
 
 ---
 
-# 4. Password Security
+# 3. Security Principles
 
-Passwords shall:
+The implementation shall follow:
 
-* Never be stored in plaintext.
-* Be hashed using Django's password hashing framework.
-* Meet password strength requirements.
-* Be validated using Django password validators.
+- Zero Trust
+- Least Privilege
+- Defense in Depth
+- Fail Secure
+- Secure by Default
+- Privacy First
 
-Reject:
-
-* Common passwords.
-* Numeric-only passwords.
-* Very short passwords.
+No request shall be trusted without verification.
 
 ---
 
-# 5. User Registration Security
+# 4. Authentication
 
-During registration:
+All Project APIs require authentication.
 
-* Validate email format.
-* Validate username.
-* Check duplicate accounts.
-* Hash password.
-* Create inactive account (until verified if enabled).
-* Send verification email.
+Authentication Method
 
----
+- JWT Access Token
+- JWT Refresh Token
 
-# 6. Login Security
+Requirements
 
-The login endpoint shall:
+- Access token required
+- Expired tokens rejected
+- Invalid tokens rejected
+- Blacklisted tokens rejected
 
-* Validate credentials.
-* Reject inactive users.
-* Reject suspended users.
-* Return generic authentication errors.
-* Record failed login attempts.
-* Apply rate limiting.
-
-Do not reveal whether the username or password was incorrect.
+Unauthenticated users cannot access Project APIs.
 
 ---
 
-# 7. Logout Security
+# 5. Authorization
 
-Logout shall:
+The Project module implements Object-Level Authorization.
 
-* Blacklist refresh token.
-* Revoke session.
-* Record logout event.
+Rules
 
----
-
-# 8. Email Verification
-
-Verification tokens shall:
-
-* Be cryptographically secure.
-* Expire after a configured duration.
-* Be single-use.
-* Activate the account upon successful verification.
+- User may access only owned projects.
+- Project ownership verified before every operation.
+- Unauthorized requests return HTTP 403.
+- Future RBAC shall extend—not replace—ownership validation.
 
 ---
 
-# 9. Password Reset Security
+# 6. Ownership Validation
 
-Password reset shall:
+Ownership shall be verified for:
 
-* Require registered email.
-* Use secure reset tokens.
-* Expire reset tokens.
-* Invalidate used tokens.
-* Record password reset events.
+- Read
+- Update
+- Archive
+- Restore
+- Delete
 
-Responses should not reveal whether an email address exists in the system.
+Validation Flow
 
----
+```
+JWT
 
-# 10. Authorization
+↓
 
-Protect resources using:
+Authenticated User
 
-* JWT Authentication
-* Role-Based Access Control (RBAC)
-* Object-level permissions where appropriate
+↓
 
-Default Roles:
+Load Project
 
-* USER
-* ADMIN
+↓
 
----
+Compare Owner
 
-# 11. Session Security
+↓
 
-Implement:
+Authorized?
 
-* Session tracking.
-* Logout current session.
-* Logout all sessions.
-* Device revocation.
+↓
 
-Store:
+Continue
 
-* Device name
-* Browser/User-Agent
-* IP address
-* Last activity
-* Expiration time
+↓
 
----
-
-# 12. API Security
-
-All protected endpoints shall:
-
-* Require valid JWT.
-* Validate request data.
-* Return standardized error responses.
-* Reject malformed requests.
-* Log security-relevant events.
-
----
-
-# 13. Rate Limiting
-
-Apply throttling to:
-
-* Login
-* Registration
-* Password reset
-* Email verification
-* Token refresh
-
-Return HTTP 429 when limits are exceeded.
-
----
-
-# 14. Input Validation
-
-Validate:
-
-* Email
-* Username
-* Password
-* UUIDs
-* Tokens
-* Request payloads
-
-Never trust client-side validation alone.
-
----
-
-# 15. Audit Logging
-
-Log:
-
-* Registration
-* Login
-* Failed login
-* Logout
-* Password changes
-* Password reset requests
-* Email verification
-* Session revocation
-
-Do not log:
-
-* Passwords
-* JWT tokens
-* Secret keys
-* Sensitive personal information
-
----
-
-# 16. Error Handling
-
-Security-related errors shall:
-
-* Be generic.
-* Avoid information leakage.
-* Return appropriate HTTP status codes.
-* Be recorded internally.
-
-Example:
-
-Incorrect:
-
-```text id="9ek7pm"
-Password incorrect.
+Reject (403)
 ```
 
-Correct:
+Ownership checks shall never be skipped.
 
-```text id="j2c9o8"
-Invalid credentials.
+---
+
+# 7. Input Validation
+
+Every request shall validate:
+
+- Required fields
+- Field length
+- Invalid characters
+- Duplicate names
+- Invalid UUID
+- Invalid project status
+- Invalid request format
+
+Client-side validation is not trusted.
+
+Backend validation is authoritative.
+
+---
+
+# 8. Output Protection
+
+Responses shall never expose:
+
+- Internal database IDs (where UUIDs are used)
+- Stack traces
+- SQL errors
+- Internal exceptions
+- Sensitive server information
+
+Error messages should be user-friendly.
+
+---
+
+# 9. Soft Delete Protection
+
+Deleting a project shall never physically remove it.
+
+Instead:
+
+- Set deleted_at
+- Hide from active queries
+- Preserve relationships
+- Preserve audit history
+
+Deleted projects remain inaccessible through normal APIs.
+
+---
+
+# 10. Audit Logging
+
+Every important action shall generate an audit event.
+
+Events
+
+- Project Created
+- Project Updated
+- Project Archived
+- Project Restored
+- Project Deleted
+- Unauthorized Access
+- Validation Failure
+
+Audit logs shall be immutable.
+
+---
+
+# 11. API Abuse Protection
+
+The API shall protect against:
+
+- Brute-force requests
+- Mass project creation
+- Excessive API requests
+- Automated scraping
+
+Future implementation
+
+- DRF Throttling
+- Nginx Rate Limiting
+- Redis-backed throttling
+
+---
+
+# 12. Secure Headers
+
+Production deployments shall enable:
+
+```
+X-Frame-Options
+
+X-Content-Type-Options
+
+Content-Security-Policy
+
+Strict-Transport-Security
+
+Referrer-Policy
+```
+
+HTTPS is mandatory in production.
+
+---
+
+# 13. SQL Injection Protection
+
+Protection provided by:
+
+- Django ORM
+- Parameterized queries
+- Input validation
+
+Raw SQL shall be avoided unless absolutely necessary.
+
+---
+
+# 14. Cross-Site Scripting (XSS)
+
+Protection
+
+- React automatic escaping
+- Backend validation
+- Content sanitization where required
+
+The frontend shall never render untrusted HTML directly.
+
+---
+
+# 15. Cross-Site Request Forgery (CSRF)
+
+JWT APIs remain stateless.
+
+If HttpOnly Cookie authentication is introduced in the future:
+
+- Enable CSRF middleware
+- Validate CSRF tokens
+- Restrict trusted origins
+
+---
+
+# 16. Insecure Direct Object Reference (IDOR)
+
+Protection
+
+Users cannot access projects simply by changing identifiers.
+
+Every lookup shall verify:
+
+- Authentication
+- Ownership
+- Authorization
+
+IDOR prevention is mandatory.
+
+---
+
+# 17. Mass Assignment Protection
+
+Only explicitly allowed fields shall be writable.
+
+Allowed
+
+- name
+- description
+
+Protected
+
+- owner
+- created_at
+- created_by
+- deleted_at
+
+The backend shall ignore unauthorized fields.
+
+---
+
+# 18. Logging Policy
+
+Log
+
+- Authentication failures
+- Authorization failures
+- Project creation
+- Updates
+- Deletes
+- Archives
+- Restores
+
+Never log
+
+- Passwords
+- JWT tokens
+- Sensitive HR data
+- Secrets
+- Environment variables
+
+---
+
+# 19. Exception Handling
+
+Exceptions shall:
+
+- Be consistent
+- Be logged
+- Hide implementation details
+- Return standardized responses
+
+Example
+
+```json
+{
+    "success": false,
+    "message": "Project not found.",
+    "error_code": "PROJECT_NOT_FOUND"
+}
 ```
 
 ---
 
-# 17. Secret Management
+# 20. Dependency Security
 
-Store secrets outside source code.
+All third-party packages shall:
 
-Examples:
+- Be actively maintained
+- Receive security updates
+- Be reviewed before introduction
 
-* SECRET_KEY
-* JWT signing key
-* Database password
-* SMTP credentials
-* API keys
-
-Use environment variables for all sensitive configuration.
+Unused dependencies shall be removed.
 
 ---
 
-# 18. HTTPS Requirements
+# 21. Security Testing
 
-Production deployments shall:
+Testing shall include:
 
-* Use HTTPS exclusively.
-* Enable secure transport.
-* Redirect HTTP to HTTPS.
-* Mark secure cookies appropriately when applicable.
+Authentication
 
----
+- Missing token
+- Invalid token
+- Expired token
 
-# 19. Security Headers
+Authorization
 
-Production configuration should include:
+- Access another user's project
+- Update another user's project
+- Delete another user's project
 
-* HSTS
-* X-Content-Type-Options
-* X-Frame-Options
-* Referrer-Policy
-* Content Security Policy (where applicable)
+Validation
 
-Implement using Django security settings or middleware.
+- Invalid UUID
+- Duplicate project
+- Invalid payload
 
----
+API Abuse
 
-# 20. Account Status
-
-Supported statuses:
-
-* Pending
-* Active
-* Suspended
-* Deactivated
-
-Authentication is permitted only for active accounts.
+- Rate limiting
+- Excessive requests
 
 ---
 
-# 21. Brute Force Protection
+# 22. Security Checklist
 
-Mitigate brute-force attacks by:
+Before release verify:
 
-* Rate limiting.
-* Monitoring failed login attempts.
-* Logging suspicious activity.
-
-Future enhancements may include temporary account lockout and CAPTCHA after repeated failures.
-
----
-
-# 22. Security Testing
-
-Verify:
-
-* Password hashing
-* JWT validation
-* Authorization
-* Token expiration
-* Token revocation
-* Password reset
-* Email verification
-* Rate limiting
-* Session revocation
+- JWT authentication enabled
+- Ownership validation enforced
+- Object permissions tested
+- Input validation complete
+- Output sanitization complete
+- Soft delete working
+- Audit logging enabled
+- Secure headers configured
+- HTTPS enabled
+- Logging policy verified
 
 ---
 
-# 23. Secure Coding Checklist
+# 23. Future Security Enhancements
 
-Developers shall:
+Future versions shall support:
 
-* Validate all input.
-* Use parameterized database access via the ORM.
-* Avoid hardcoded secrets.
-* Handle exceptions safely.
-* Follow the project's Coding Standards.
-
----
-
-# 24. Security Deliverables
-
-* JWT Authentication
-* Password Security
-* Email Verification
-* Password Reset
-* Session Management
-* Audit Logging
-* Rate Limiting
-* Role-Based Access Control
+- Role-Based Access Control (RBAC)
+- Organization-level permissions
+- Multi-factor Authentication
+- Single Sign-On (SSO)
+- API Keys
+- IP Restrictions
+- Session Monitoring
+- Security Dashboard
+- Web Application Firewall (WAF)
 
 ---
 
-# 25. Definition of Done
+# 24. Definition of Done
 
 Security implementation is complete when:
 
-* Authentication is secure.
-* Authorization is enforced.
-* Passwords are protected.
-* Tokens are managed correctly.
-* Rate limiting is active.
-* Audit logging is functional.
-* Security tests pass.
-* No critical security findings remain.
+- Authentication enforced
+- Authorization enforced
+- Ownership validation complete
+- Input validation implemented
+- Audit logging enabled
+- Security tests passing
+- Code review completed
+- Security review approved
 
 ---
 
-# 26. Related Documents
+# 25. Related Documents
 
-* 04_BACKEND_IMPLEMENTATION.md
-* 06_API_IMPLEMENTATION.md
-* 08_TESTING_PLAN.md
-* 11_CODING_STANDARDS.md
-* 12_SECURITY_GUIDELINES.md
+- 00_EPIC_OVERVIEW.md
+- 03_DATABASE_DESIGN.md
+- 04_BACKEND_IMPLEMENTATION.md
+- 06_API_IMPLEMENTATION.md
+- 08_TESTING_PLAN.md
 
 ---
 
 # Version History
 
-| Version | Description                                        |
-| ------- | -------------------------------------------------- |
-| 1.0.0   | Initial security implementation guide for EPIC-01. |
+| Version | Description |
+|----------|-------------|
+| 1.0.0 | Initial security implementation guide for EPIC-02 |

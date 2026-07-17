@@ -1,195 +1,343 @@
+# EPIC-02 — Project Workspace Management
+
 # README.md
 
-# EPIC-01 – Authentication & User Management
+---
 
-## Overview
+# Privacy-Preserving Synthetic HR Records Generator
 
-EPIC-01 establishes the authentication, authorization, and user management foundation for the Privacy-Preserving Synthetic HR Records Generator.
+## EPIC-02
 
-It provides secure user identity, access control, session management, and account lifecycle management. All subsequent epics depend on the successful completion of this epic.
+# Project Workspace Management
 
-**Status:** Not Started
+Version: 1.0.0
 
-**Priority:** Critical
+Status: Ready for Implementation
 
-**Estimated Duration:** 10–15 Working Days
+---
+
+# Overview
+
+EPIC-02 introduces the **Project Workspace Management** module.
+
+The Project Workspace is the foundational business entity of the Privacy-Preserving Synthetic HR Records Generator. Every business resource within the platform belongs to a Project Workspace.
+
+This Epic establishes the ownership model, workspace lifecycle, project organization, dashboard foundation, and authorization boundaries that future epics depend upon.
+
+Unlike a traditional CRUD module, the Project Workspace acts as the root container for all synthetic data generation activities.
 
 ---
 
 # Objectives
 
-* Implement secure authentication.
-* Implement JWT-based authorization.
-* Create a custom User model.
-* Manage user accounts and profiles.
-* Support password recovery.
-* Support email verification.
-* Track user sessions.
-* Implement Role-Based Access Control (RBAC).
-* Record authentication audit logs.
-* Protect authentication endpoints against abuse.
+The objectives of this Epic are to:
+
+- Create isolated workspaces for users.
+- Establish project ownership.
+- Organize datasets and future resources.
+- Provide secure project management.
+- Support future enterprise collaboration.
+- Prepare the platform for scalable synthetic data generation.
 
 ---
 
 # Features
 
-* User Registration
-* User Login
-* User Logout
-* JWT Authentication
-* Refresh Tokens
-* Token Rotation
-* Token Blacklisting
-* Email Verification
-* Password Reset
-* Password Change
-* User Profile Management
-* Session Management
-* Device Tracking
-* Role-Based Access Control
-* Audit Logging
-* Rate Limiting
-* Account Lifecycle Management
+This Epic implements:
+
+- Project Creation
+- Project Management
+- Project Listing
+- Project Details
+- Dashboard Statistics
+- Ownership Validation
+- Search
+- Filtering
+- Ordering
+- Pagination
+- Archive
+- Restore
+- Soft Delete
+- Audit Integration
 
 ---
 
-# Deliverables
+# Architecture Position
 
-## Backend
+```
+Authentication
+        │
+        ▼
+Project Workspace
+        │
+        ├──────────────┐
+        │              │
+        ▼              ▼
+Datasets         Dashboard
+        │
+        ▼
+Schema Management
+        │
+        ▼
+Privacy Engine
+        │
+        ▼
+Generation Engine
+        │
+        ▼
+Validation
+        │
+        ▼
+Export
+```
 
-* Authentication App
-* Custom User Model
-* User Manager
-* Authentication Services
-* JWT Configuration
-* REST APIs
-* Session Management
-* Audit Logging
-* Security Implementation
-
-## Frontend
-
-* Login Page
-* Registration Page
-* Forgot Password
-* Reset Password
-* Verify Email
-* Profile
-* Session Management
-
-## Testing
-
-* Unit Tests
-* Integration Tests
-* API Tests
-* Security Tests
-
----
-
-# Sprint Plan
-
-| Sprint   | Goal                           |
-| -------- | ------------------------------ |
-| Sprint 1 | Authentication Foundation      |
-| Sprint 2 | Registration & Login           |
-| Sprint 3 | Account Management             |
-| Sprint 4 | Sessions & Security            |
-| Sprint 5 | Testing & Production Hardening |
+The Project Workspace serves as the root business entity for all future platform modules.
 
 ---
 
-# Document Structure
+# Folder Structure
 
-| Document                      | Purpose                              |
-| ----------------------------- | ------------------------------------ |
-| 00_EPIC_OVERVIEW.md           | Epic overview and objectives         |
-| 01_FEATURE_BREAKDOWN.md       | Features included in the epic        |
-| 02_USER_STORIES.md            | User stories and acceptance criteria |
-| 03_DATABASE_DESIGN.md         | Database models and relationships    |
-| 04_BACKEND_IMPLEMENTATION.md  | Backend implementation guide         |
-| 05_FRONTEND_IMPLEMENTATION.md | Frontend implementation guide        |
-| 06_API_IMPLEMENTATION.md      | API endpoints and contracts          |
-| 07_SECURITY_IMPLEMENTATION.md | Security implementation requirements |
-| 08_TESTING_PLAN.md            | Testing strategy and test cases      |
-| 09_SPRINT_PLAN.md             | Sprint execution plan                |
-| 10_PROGRESS_CHECKLIST.md      | Development progress tracker         |
+```
+EPIC_02_PROJECT_WORKSPACE/
+
+│
+
+├── README.md
+
+├── 00_EPIC_OVERVIEW.md
+
+├── 01_FEATURE_BREAKDOWN.md
+
+├── 02_USER_STORIES.md
+
+├── 03_DATABASE_DESIGN.md
+
+├── 04_BACKEND_IMPLEMENTATION.md
+
+├── 05_FRONTEND_IMPLEMENTATION.md
+
+├── 06_API_IMPLEMENTATION.md
+
+├── 07_SECURITY_IMPLEMENTATION.md
+
+├── 08_TESTING_PLAN.md
+
+├── 09_SPRINT_PLAN.md
+
+└── 10_PROGRESS_CHECKLIST.md
+```
 
 ---
 
 # Development Order
 
-```text id="rj6l3a"
-Database
-     │
-     ▼
-Models
-     │
-     ▼
-Managers
-     │
-     ▼
-Serializers
-     │
-     ▼
-Services
-     │
-     ▼
-Authentication
-     │
-     ▼
-API Views
-     │
-     ▼
-Frontend
-     │
-     ▼
-Testing
-     │
-     ▼
-Production Review
+The recommended implementation sequence is:
+
 ```
+Database
+
+↓
+
+Models
+
+↓
+
+Managers
+
+↓
+
+Validators
+
+↓
+
+Exceptions
+
+↓
+
+Serializers
+
+↓
+
+Services
+
+↓
+
+Permissions
+
+↓
+
+Views
+
+↓
+
+URLs
+
+↓
+
+Dashboard
+
+↓
+
+Frontend
+
+↓
+
+Testing
+
+↓
+
+Documentation
+
+↓
+
+Code Review
+```
+
+---
+
+# Technology Stack
+
+Backend
+
+- Python
+- Django
+- Django REST Framework
+- PostgreSQL
+
+Frontend
+
+- React
+- Vite
+- Tailwind CSS
+- shadcn/ui
+- Axios
+
+Authentication
+
+- JWT
+
+Future
+
+- Redis
+- Celery
+- Docker
+- Kubernetes
+
+---
+
+# Deliverables
+
+Upon completion, EPIC-02 provides:
+
+- Project Workspace Module
+- RESTful APIs
+- Dashboard
+- Ownership Validation
+- Authorization
+- Search
+- Filtering
+- Pagination
+- Archive & Restore
+- Soft Delete
+- Audit Logging
+- Responsive Frontend
+- Production Documentation
+
+---
+
+# Security
+
+The Project Workspace implements:
+
+- JWT Authentication
+- Object-Level Authorization
+- Ownership Validation
+- Soft Delete Protection
+- Input Validation
+- Audit Logging
+- Secure API Responses
+
+---
+
+# Testing
+
+Testing includes:
+
+- Unit Tests
+- Integration Tests
+- API Tests
+- Permission Tests
+- Validation Tests
+- Security Tests
+- Performance Tests
+
+---
+
+# Dependencies
+
+Requires:
+
+- EPIC-01 Authentication & User Management
+
+Enables:
+
+- EPIC-03 Dataset Management
+- EPIC-04 Schema Management
+- EPIC-05 Privacy Engine
+- EPIC-06 AI Model Framework
+- EPIC-07 Synthetic Data Generation
+- EPIC-08 Export Management
+
+---
+
+# Documentation Index
+
+| File | Description |
+|------|-------------|
+| README.md | Epic introduction and navigation |
+| 00_EPIC_OVERVIEW.md | Epic overview and scope |
+| 01_FEATURE_BREAKDOWN.md | Functional features |
+| 02_USER_STORIES.md | User stories and acceptance criteria |
+| 03_DATABASE_DESIGN.md | Database architecture |
+| 04_BACKEND_IMPLEMENTATION.md | Backend implementation guide |
+| 05_FRONTEND_IMPLEMENTATION.md | Frontend implementation guide |
+| 06_API_IMPLEMENTATION.md | REST API specification |
+| 07_SECURITY_IMPLEMENTATION.md | Security implementation |
+| 08_TESTING_PLAN.md | Testing strategy |
+| 09_SPRINT_PLAN.md | Sprint roadmap |
+| 10_PROGRESS_CHECKLIST.md | Development checklist |
 
 ---
 
 # Definition of Done
 
-EPIC-01 is complete when:
+EPIC-02 is complete when:
 
-* Authentication is fully functional.
-* Authorization is enforced.
-* User management is complete.
-* Session management is operational.
-* Security requirements are satisfied.
-* Automated tests pass.
-* Documentation is updated.
-* Code review is approved.
-* The platform is ready for EPIC-02.
-
----
-
-# Related Project Documents
-
-* 00_PROJECT_CONSTITUTION.md
-* 02_REQUIREMENTS_SPECIFICATION.md
-* 07_BACKEND_ARCHITECTURE.md
-* 08_DATABASE_DESIGN.md
-* 09_API_SPECIFICATION.md
-* 11_CODING_STANDARDS.md
-* 12_SECURITY_GUIDELINES.md
-* 13_TESTING_STRATEGY.md
+- All planned features implemented
+- Database completed
+- APIs operational
+- Frontend integrated
+- Security implemented
+- Testing completed
+- Documentation finalized
+- Code review approved
+- Product Owner approval received
+- Epic status changed to **LOCKED**
 
 ---
 
 # Next Epic
 
-**EPIC-02 – Project Management**
+After successful completion of EPIC-02, development proceeds to:
 
-After completing EPIC-01, development continues with Project Management, where authenticated users can create, manage, update, archive, and organize synthetic HR data generation projects.
+**EPIC-03 — Dataset Upload & Dataset Management**
+
+The Project Workspace established in this Epic becomes the parent entity for all datasets and future synthetic data generation workflows.
 
 ---
 
-# Revision History
+# Version History
 
-| Version | Description                                                  |
-| ------- | ------------------------------------------------------------ |
-| 1.0.0   | Initial README for EPIC-01 Authentication & User Management. |
+| Version | Description |
+|----------|-------------|
+| 1.0.0 | Initial README for EPIC-02 Project Workspace Management |

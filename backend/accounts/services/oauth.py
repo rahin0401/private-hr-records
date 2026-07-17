@@ -2,13 +2,15 @@ from django.db import transaction
 
 from rest_framework import serializers
 
+from accounts.services.session import SessionService
+
 from accounts.models import (AuditAction,AuditLog,AuditStatus,AuthenticationProvider,CustomUser,)
 
 from accounts.utils.jwt import (
     generate_tokens,
 )
 
-from accounts.utils.oauth import (verify_google_token,verify_github_token,get_google_user_info,get_github_user_info,generate_google_user_data,generate_github_user_data,is_google_email_verified,is_github_email_verified,)
+from accounts.utils.oauth import (verify_google_token,verify_github_token,generate_google_user_data,generate_github_user_data,is_google_email_verified,is_github_email_verified,)
 
 
 class OAuthService:
@@ -31,6 +33,18 @@ class OAuthService:
         user = CustomUser.objects.filter(
             email=user_data["email"]
         ).first()
+        if user is not None:
+            if user.provider not in (
+                AuthenticationProvider.LOCAL,
+                AuthenticationProvider.GOOGLE,
+            ):
+                raise serializers.ValidationError(
+                    {
+                        "account": (
+                            "This account is registered with another authentication provider."
+                        )
+                    }
+                )
 
         with transaction.atomic():
 
@@ -47,6 +61,21 @@ class OAuthService:
                 )
 
             tokens = generate_tokens(user)
+            SessionService.create_session(
+            user=user,
+            refresh_token_jti=tokens["refresh_jti"],
+            login_provider=user.provider,
+            device_name=None,
+            device_type=device_type,
+            browser=browser,
+            browser_version=None,
+            operating_system=operating_system,
+            operating_system_version=None,
+            ip_address=ip_address,
+            user_agent=user_agent,
+            expires_at=tokens["refresh_expires_at"],
+        )
+
 
             AuditLog.objects.create(
                 user=user,
@@ -71,7 +100,7 @@ class OAuthService:
         if not is_github_email_verified(payload):
             raise serializers.ValidationError(
                 {
-                    "email": "Google email is not verified."
+                    "email": "Github email is not verified."
                 }
             )
 
@@ -80,7 +109,18 @@ class OAuthService:
         user = CustomUser.objects.filter(
             email=user_data["email"]
         ).first()
-
+        if user is not None:
+            if user.provider not in (
+                AuthenticationProvider.LOCAL,
+                AuthenticationProvider.GOOGLE,
+            ):
+                raise serializers.ValidationError(
+                    {
+                        "account": (
+                            "This account is registered with another authentication provider."
+                        )
+                    }
+                )
         with transaction.atomic():
 
             if user is None:
@@ -96,6 +136,20 @@ class OAuthService:
                 )
 
             tokens = generate_tokens(user)
+            SessionService.create_session(
+            user=user,
+            refresh_token_jti=tokens["refresh_jti"],
+            login_provider=user.provider,
+            device_name=None,
+            device_type=device_type,
+            browser=browser,
+            browser_version=None,
+            operating_system=operating_system,
+            operating_system_version=None,
+            ip_address=ip_address,
+            user_agent=user_agent,
+            expires_at=tokens["refresh_expires_at"],
+        )
 
             AuditLog.objects.create(
                 user=user,
