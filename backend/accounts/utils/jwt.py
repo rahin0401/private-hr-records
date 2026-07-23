@@ -6,7 +6,7 @@ from rest_framework_simplejwt.exceptions import TokenError
 from datetime import datetime,timezone
 from accounts.models import CustomUser
 from infrastructure.redis.blacklist import RedisBlacklistService
-
+from django.utils import timezone as time
 redis_blacklist = RedisBlacklistService()
 
 class TokenPair(TypedDict):
@@ -52,7 +52,7 @@ def blacklist_refresh_token(
         token = RefreshToken(refresh_token)
 
         ttl = max(
-            token["exp"] - int(timezone.now().timestamp()),
+            token["exp"] - int(time.now().timestamp()),
             1,
         )
 

@@ -45,6 +45,10 @@ from infrastructure.redis.constants import (
 redis_otp = RedisOTPService()
 redis_rate_limit = RedisRateLimitService()
 
+
+import uuid
+
+
 class AuthenticationService:
 
 
@@ -332,7 +336,7 @@ class AuthenticationService:
 
     @staticmethod
     def login_user(*,email: str,password: str,ip_address: str,user_agent: str,browser: str,operating_system: str,device_type: str,endpoint: str,) -> dict:
-    
+       
         attempt_key = LOGIN_ATTEMPTS.format(
             email=email,
         )

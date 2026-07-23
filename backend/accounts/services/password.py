@@ -5,7 +5,6 @@ from rest_framework import serializers
 from accounts.services.session import SessionService
 from accounts.models import (AuditAction,AuditLog,AuditStatus,CustomUser,EmailOTP,OTPPurpose,)
 from infrastructure.redis.otp import RedisOTPService
-from accounts.utils.email import (send_password_reset_email,send_security_alert_email,)
 from infrastructure.celery.email_tasks import (send_password_reset_email_task,send_security_alert_email_task)
 
 from accounts.utils.otp import (generate_otp,get_otp_expiry,hash_otp,verify_otp,)
@@ -60,6 +59,12 @@ class PasswordService:
             .order_by("-created_at")
             .first()
         )
+        otp = generate_otp()
+
+        otp_hash = hash_otp(otp)
+
+        expires_at = get_otp_expiry()
+        
         redis_otp.cache_password_reset_otp(
             email=user.email,
             otp_hash=otp_hash,
@@ -75,11 +80,7 @@ class PasswordService:
             "otp": "Maximum password reset requests exceeded."
         }
     )
-        otp = generate_otp()
-
-        otp_hash = hash_otp(otp)
-
-        expires_at = get_otp_expiry()
+   
 
         with transaction.atomic():
 

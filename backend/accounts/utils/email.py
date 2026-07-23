@@ -52,7 +52,7 @@ def send_verification_email(
         template_name="emails/verify_email.html",
         context={
             "otp": otp,
-            "expiry_minutes": settings.OTP_EXPIRY_MINUTES,
+            "expiry_minutes": settings.OTP_EXPIRE_SECONDS,
             "project_name": settings.PROJECT_NAME,
         },
     )
@@ -69,7 +69,7 @@ def send_password_reset_email(
         template_name="emails/password_reset.html",
         context={
             "otp": otp,
-            "expiry_minutes": settings.OTP_EXPIRY_MINUTES,
+            "expiry_minutes": settings.OTP_EXPIRE_SECONDS,
             "project_name": settings.PROJECT_NAME,
         },
     )

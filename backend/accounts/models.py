@@ -185,12 +185,7 @@ class UserSession(models.Model):
         unique=True,
     )
 
-    session_id = models.CharField(
-        max_length=255,
-        unique=True,
-        db_index=True,
-    )
-
+  
     refresh_token_jti = models.CharField(
         max_length=255,
         unique=True,
@@ -276,7 +271,7 @@ class UserSession(models.Model):
 
         indexes = [
             models.Index(fields=["user", "status"]),
-            models.Index(fields=["session_id"]),
+            models.Index(fields=["uuid"]),
             models.Index(fields=["refresh_token_jti"]),
             models.Index(fields=["expires_at"]),
             models.Index(fields=["last_activity"]),
